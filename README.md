@@ -1,6 +1,6 @@
-# GNOME Mode Shift
+# GNOME Night Shift
 
-GNOME Mode Shift is a GNOME Shell extension that automatically switches your desktop between **Day** and **Night** modes (Light and Dark themes). Instead of manually changing appearance settings, the extension detects whether it is currently day or night at your location and applies the appropriate mode automatically.
+GNOME Night Shift is a GNOME Shell extension that automatically switches your desktop between **Day** and **Night** modes (Light and Dark themes). Instead of manually changing appearance settings, the extension detects whether it is currently day or night at your location and applies the appropriate mode automatically.
 
 The extension is designed for users who prefer a light desktop during the day and a dark desktop after sunset, providing a seamless transition throughout the day.
 
@@ -13,7 +13,7 @@ The extension is designed for users who prefer a light desktop during the day an
 
 ## How It Works
 
-GNOME Mode Shift relies on **Redshift** to determine whether the sun is currently above or below the horizon at your location.
+GNOME night Shift relies on **Redshift** to determine whether the sun is currently above or below the horizon at your location.
 
 Your geographic location is configured through Redshift's configuration file. Using this information, Redshift calculates local sunrise and sunset times, allowing GNOME Mode Shift to determine when to activate **Day** or **Night** mode.
 
@@ -104,7 +104,7 @@ paru -S gnome-night-shift-git
 ## Usage
 
 1. Install and configure **Redshift** with your location.
-2. Install and enable **GNOME Mode Shift**
+2. Install and enable **GNOME Night Shift**
 ```sh
 systemctl enable --now gnome-night-shift.service gnome-night-shift.timer auto-update-gnome-theme.service auto-update-gnome-theme.path stop-mode-shift-timer.service
 ```
@@ -112,7 +112,7 @@ systemctl enable --now gnome-night-shift.service gnome-night-shift.timer auto-up
 4. Configure the appearance settings for **Night** mode.
 5. The extension will automatically switch modes based on the current sunrise and sunset times reported by Redshift.
 
-Once configured, GNOME Mode Shift automatically changes between Day and Night modes as sunrise and sunset occur at your configured location.
+Once configured, GNOME Night Shift automatically changes between Day and Night modes as sunrise and sunset occur at your configured location.
 
 ## Source Code
 
