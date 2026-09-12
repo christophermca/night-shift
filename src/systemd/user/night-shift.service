@@ -1,0 +1,10 @@
+[Unit]
+Description=Compares current time with time of sunrise and sunset
+Wants=display-manager.service
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/%u/.local/share/gnome-shell/extensions/night-shift@christophermca.github.io/bin/is_day_or_night.py
+
+Restart=no

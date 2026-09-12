@@ -1,10 +1,10 @@
 [Unit]
-Description=timer gnome-night-shift
+Description=timer night-shift
 Wants=network-online.target geoclue.service
 After=network-online.target
 
 [Timer]
-OnCalendar=Daily
+OnCalendar=daily
 Persistent=true
 Unit=get-sunrise-sunset.service
 

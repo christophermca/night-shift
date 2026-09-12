@@ -1,0 +1,11 @@
+[Unit]
+Description=timer night-shift
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+OnStartupSec=0
+Persistent=true
+Unit=night-shift.service
+
+[Install]
+WantedBy=timers.target

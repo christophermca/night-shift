@@ -1,0 +1,11 @@
+[Unit]
+Description=Gets local sunrise and sunset times
+Wants=display-manager.service
+After=geoclue.service network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/%u/.local/share/gnome-shell/extensions/night-shift@christophermca.github.io/bin/get_sunrise_sunset.py
+
+
+Restart=no
