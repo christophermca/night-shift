@@ -6,9 +6,9 @@ requires = ["setuptools>=61.0"]
 authors = [
   { name="Christopher McAdams", email="mca.christopher@gmail.com" }
 ]
+name = "night-shift"
 description = "Get Times of sunrise sunset for provided location"
 dependencies = ["requests>=2.28.0","pycairo","PyGObject" ]
-name = "gnome-night-shift"
 readme = "README.md"
 requires-python = ">=3.0"
 version = "0.1.0"
