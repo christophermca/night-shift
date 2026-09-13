@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 import requests
-from src.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
+from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 
 
 @pytest.fixture
@@ -16,8 +16,12 @@ def mock_settings():
     return settings
 
 
-@patch("src.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location")
-@patch("src.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset")
+@patch(
+    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
+)
+@patch(
+    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
+)
 def test_get_sunrise_sunset_success(
     mock_get_api, mock_get_location, mock_settings
 ):
@@ -30,7 +34,7 @@ def test_get_sunrise_sunset_success(
     mock_get_api.assert_called_once_with(40.7128, -74.0060, False)
 
 
-@patch("src.bin.get_sunrise_sunset.requests.get")
+@patch("night_shift.bin.get_sunrise_sunset.requests.get")
 def test_get_sunrise_sunset_http_error(mock_get):
     """Test handling of HTTP errors"""
     mock_get.side_effect = requests.exceptions.HTTPError("HTTP 500")
