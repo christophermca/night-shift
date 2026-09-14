@@ -16,8 +16,8 @@ version = "0.1.0"
 [project.urls]
 Homepage = "https://github.com/christophermca/night-shift"
 
-[tool.pytest.ini_options]
-pythonpath = ["src"]
+# [tool.pytest.ini_options]
+# pythonpath = ["src"]
 
 classifiers = [
   "Programming Language :: Python :: 3",
