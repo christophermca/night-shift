@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import os
 import re
 import gi
 import json
@@ -8,54 +7,80 @@ import argparse
 import requests
 import subprocess
 
-from pathlib import Path
 from datetime import datetime
 
 gi.require_version("Gio", "2.0")
-from gi.repository import Gio, GLib
+from gi.repository import GLib
 
 NOAA = "https://api.sunrise-sunset.org/v2"
-SCHEMA_ID = "org.gnome.shell.extensions.night-shift"
-
-schema_dir = os.path.expanduser(
-    Path.home()
-    / ".local"
-    / "share"
-    / "gnome-shell"
-    / "extensions"
-    / "night-shift@christophermca.github.io"
-    / "schemas"
-)
-
-# Load schema
-schema_source = Gio.SettingsSchemaSource.new_from_directory(
-    schema_dir, Gio.SettingsSchemaSource.get_default(), False
-)
 
 
-def _settings() -> object:
-    # initialize gsettings obj
-    schemaObj = schema_source.lookup(SCHEMA_ID, True)
-    settings = Gio.Settings.new_full(schemaObj, None, None)
+class Settings:
 
-    return settings
+    def __init__(self):
+        import os
+        from pathlib import Path
+        from gi.repository import Gio
+
+        # Load schema
+        SCHEMA_ID = "org.gnome.shell.extensions.night-shift"
+
+        schema_dir = os.path.expanduser(
+            Path.home()
+            / ".local"
+            / "share"
+            / "gnome-shell"
+            / "extensions"
+            / "night-shift@christophermca.github.io"
+            / "schemas"
+        )
+
+        schema_source = Gio.SettingsSchemaSource.new_from_directory(
+            schema_dir, Gio.SettingsSchemaSource.get_default(), False
+        )
+
+        try:
+            # initialize gsettings obj
+            schemaObj = schema_source.lookup(SCHEMA_ID, True)
+            settings = Gio.Settings.new_full(schemaObj, None, None)
+
+            self.settings = settings
+
+        except Exception as e:
+            print(f"Error {e}")
+            return None
 
 
 class GetTimeOfSunriseSunset:
-    def __init__(self, debug: bool = False, override: bool = False):
-        self.settings = _settings()
-        coords: tuple(float, float) = self._get_location(override)
+    def __init__(
+        self,
+        debug: bool = False,
+        override: bool = False,
+        lat_lng: tuple(float, float) = None,
+    ):
+        self.settings = Settings()
+        self.agent = None
+        coords: tuple(float, float) = (
+            lat_lng if lat_lng else self._get_location(override)
+        )
+
         if coords:
             self._get_sunrise_sunset(*coords, debug)
 
     def _get_location(self, override: bool) -> tuple(float, float):
         try:
-            useGeoclue = self.settings.get_boolean("use-geoclue")
-            if not useGeoclue:
+            useGeoclue: bool | None = None
+            if callable(self.settings):
+                useGeoclue = self.settings.get_boolean("use-geoclue")
+
+            if useGeoclue:
                 coords: tuple(float, float) = _get_static_location()
             else:
                 # Get location data from Geoclue
-                agent = subprocess.Popen(["/usr/lib/geoclue-2.0/demos/agent"])
+                if self.agent is not None and agent.poll() is None:
+                    agent = subprocess.Popen(
+                        ["/usr/lib/geoclue-2.0/demos/agent"]
+                    )
                 geoclue_data = subprocess.Popen(
                     [
                         "/usr/lib/geoclue-2.0/demos/where-am-i",
@@ -89,8 +114,7 @@ class GetTimeOfSunriseSunset:
                     )
                 coords = tuple(arr)
 
-                # did location update?
-            self._save(coords, override)
+                self._save(coords, override)
 
             return coords
 
@@ -104,14 +128,20 @@ class GetTimeOfSunriseSunset:
 
         finally:
             try:
-                if agent.poll():
-                    print("Terminating geoclue agent")
-                    agent.terminate()  # Gracefully exits
-                    agent.wait()  # Prevents zombie processes
+                while agent.poll() is None:
+                    print("process still running")
+                    time.sleep(1)
+
+                print("Terminating geoclue agent")
+                agent.terminate()  # Gracefully exits
+                agent.wait()  # Prevents zombie processes
+
             except NameError:
                 pass
 
-    def _get_sunrise_sunset(self, lat: float, lng: float, debug: bool):
+    def _get_sunrise_sunset(
+        self, lat: float, lng: float, debug: bool
+    ) -> tuple(float, float):
         try:
             params = {"lat": lat, "lng": lng}
 
@@ -132,73 +162,56 @@ class GetTimeOfSunriseSunset:
             times = (sunrise, sunset)
 
             # update settings
-            self.settings.set_string(
-                "timestamp", f"{datetime.now().astimezone().isoformat()}"
-            )
-            print(
-                f"night-shift {data.get('sunrise'), data.get('sunset'), data.get('tzid')}"
-            )
-            self.settings.set_string("tzid", tzid)
-            times_tuple = GLib.Variant("(ss)", times)
+            if callable(self.settings):
+                self.settings.set_string(
+                    "timestamp", f"{datetime.now().astimezone().isoformat()}"
+                )
+                print(
+                    f"night-shift {data.get('sunrise'), data.get('sunset'), data.get('tzid')}"
+                )
+                self.settings.set_string("tzid", tzid)
+                times_tuple = GLib.Variant("(ss)", times)
+                self.settings.set_value("times", times_tuple)
 
-            self.settings.set_value("times", times_tuple)
+            return times
 
         except requests.exceptions.HTTPError as http_err:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
 
-        finally:
-            print("Done")
-
     def _save(self, coords: tuple(float, float), override=False) -> None:
-        previous_coordinates = self.settings.get_value(
-            "last-known-coordinates"
-        )
-
-        if override or (coords == previous_coordinates):
-
-            last_known_coordinates = GLib.Variant("(dd)", coords)
-            self.settings.set_value(
-                "last-known-coordinates", last_known_coordinates
+        if callable(self.settings):
+            previous_coordinates = self.settings.get_value(
+                "last-known-coordinates"
             )
-            return coords
-        else:
-            coords_string = ",".join(map(str, coords))
-            print(
-                f"Locations are the same (old/new) '{previous_coordinates}'/'{coords_string}'"
-            )
+
+            if override or (coords == previous_coordinates):
+
+                last_known_coordinates = GLib.Variant("(dd)", coords)
+                self.settings.set_value(
+                    "last-known-coordinates", last_known_coordinates
+                )
+                return coords
+            else:
+                coords_string = ",".join(map(str, coords))
+                print(
+                    f"Locations are the same (old/new) '{previous_coordinates}'/'{coords_string}'"
+                )
 
     def _get_static_location(self) -> tuple(float, float):
 
-        lat = self.settings.get_string("static-latitude")
-        lng = self.settings.get_string("static-longitude")
+        if callable(self.settings):
+            lat = self.settings.get_string("static-latitude")
+            lng = self.settings.get_string("static-longitude")
 
-        if lat and lng:
-            static_location = (float(lat), float(lng))
+            if lat and lng:
+                static_location = (float(lat), float(lng))
 
-            last_known_coordinates = GLib.Variant("(dd)", static_location)
-            self.settings.set_value(
-                "last-known-coordinates", last_known_coordinates
-            )
+                last_known_coordinates = GLib.Variant("(dd)", static_location)
+                self.settings.set_value(
+                    "last-known-coordinates", last_known_coordinates
+                )
 
-            return static_location
+                return static_location
 
-        else:
-            print("Missing required keys")
-
-
-def main():
-    # Parse commendline arguments
-    parser = argparse.ArgumentParser(
-        description="Get the times for the sunrise/sunset"
-    )
-    parser.add_argument("-f", "--force", dest="override", action="store_true")
-    parser.add_argument("-d", "--debug", action="store_true")
-    args = parser.parse_args()
-
-    # Run
-
-    GetTimeOfSunriseSunset(**vars(args))
-
-
-if __name__ == "__main__":
-    main()
+            else:
+                print("Missing required keys")

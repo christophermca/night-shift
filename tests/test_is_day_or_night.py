@@ -11,6 +11,13 @@ def mock_settings():
     return settings
 
 
+def test_settings():
+    MockedGio = MagicMock()
+    MockedGio.Settings.new_full.return_value = ["6:00", "18:30"]
+
+    is_day_or_night()
+
+
 @patch("night_shift.bin.is_day_or_night._settings")
 def test_is_day_or_night_during_day(mock_settings_func, mock_settings):
     """Test detection of daytime"""
@@ -22,6 +29,34 @@ def test_is_day_or_night_during_day(mock_settings_func, mock_settings):
         is_day_or_night()
 
         mock_settings.set_string.assert_called_with("day-or-night", "day")
+
+    with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
+        mock_datetime.now.return_value.strftime.return_value = "05:59"
+
+        is_day_or_night()
+
+        mock_settings.set_string.assert_called_with("day-or-night", "night")
+
+    with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
+        mock_datetime.now.return_value.strftime.return_value = "06:00"
+
+        is_day_or_night()
+
+        mock_settings.set_string.assert_called_with("day-or-night", "day")
+
+    with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
+        mock_datetime.now.return_value.strftime.return_value = "18:29"
+
+        is_day_or_night()
+
+        mock_settings.set_string.assert_called_with("day-or-night", "day")
+
+    with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
+        mock_datetime.now.return_value.strftime.return_value = "18:30"
+
+        is_day_or_night()
+
+        mock_settings.set_string.assert_called_with("day-or-night", "night")
 
 
 @patch("night_shift.bin.is_day_or_night._settings")
