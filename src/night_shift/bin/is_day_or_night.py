@@ -37,15 +37,16 @@ def is_day_or_night():
     # check if currrent time is after sunrise or sunset
     DAY_NIGHT: str
 
-    if current_time >= sunrise:
+    if sunrise <= current_time < sunset:
         DAY_NIGHT = "day"
-
-    if current_time >= sunset:
+    else:
         DAY_NIGHT = "night"
 
     # set day-or-night
     if DAY_NIGHT:
         settings.set_string("day-or-night", DAY_NIGHT)
+
+        print(f"{DAY_NIGHT}time")
 
 
 def _settings() -> object:
@@ -56,5 +57,5 @@ def _settings() -> object:
     return settings
 
 
-if __name__ == "__main__":
-    is_day_or_night()
+# if __name__ == "__main__":
+#     is_day_or_night()
