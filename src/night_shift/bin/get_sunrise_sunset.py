@@ -5,6 +5,7 @@ import gi
 import json
 import argparse
 import requests
+import time
 import subprocess
 
 from datetime import datetime
@@ -77,8 +78,8 @@ class GetTimeOfSunriseSunset:
                 coords: tuple(float, float) = _get_static_location()
             else:
                 # Get location data from Geoclue
-                if self.agent is not None and agent.poll() is None:
-                    agent = subprocess.Popen(
+                if self.agent is None:
+                    self.agent = subprocess.Popen(
                         ["/usr/lib/geoclue-2.0/demos/agent"]
                     )
                 geoclue_data = subprocess.Popen(
@@ -128,16 +129,18 @@ class GetTimeOfSunriseSunset:
 
         finally:
             try:
-                while agent.poll() is None:
-                    print("process still running")
-                    time.sleep(1)
+                while True:
+                    if self.agent.poll() is None:
+                        print("process still running")
+                        time.sleep(1)
 
-                print("Terminating geoclue agent")
-                agent.terminate()  # Gracefully exits
-                agent.wait()  # Prevents zombie processes
+                    print("Terminating geoclue agent")
+                    self.agent.kill()  # Gracefully exits
+                    self.agent.wait()  # Prevents zombie processes
+                    break
 
-            except NameError:
-                pass
+            except Exception as e:
+                print(f"Error: {e}")
 
     def _get_sunrise_sunset(
         self, lat: float, lng: float, debug: bool
