@@ -14,7 +14,6 @@ def run_once(
     verbose: bool = False, override: bool = False, check_now: bool = True
 ):
     try:
-        print("one")
         GetTimeOfSunriseSunset(verbose, override)
         if check_now == True:
             try:
