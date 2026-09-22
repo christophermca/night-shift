@@ -11,7 +11,9 @@ def check():
 
 
 def run_once(
-    verbose: bool = False, override: bool = False, check_now: bool = True
+    verbose: bool = False,
+    override: bool = False,
+    check_now: bool = False,
 ):
     try:
         GetTimeOfSunriseSunset(verbose, override)
@@ -31,6 +33,18 @@ def main():
     )
 
     parser.add_argument(
+        "latitude",
+        nargs="?",
+        help="compares current time with sunrise/sunset time",
+    )
+
+    parser.add_argument(
+        "longitude",
+        nargs="?",
+        help="compares current time with sunrise/sunset time",
+    )
+
+    parser.add_argument(
         "-c",
         "--check-now",
         action="store_true",
@@ -45,9 +59,9 @@ def main():
     )
 
     parser.add_argument(
-        "-u",
-        "--update-now",
-        dest="update_now",
+        "-g",
+        "--geoclue",
+        dest="use_geoclue",
         action="store_true",
         help="Update sunrise/sunset data",
     )
@@ -69,16 +83,22 @@ def main():
     )
 
     args = parser.parse_args()
-    check_now: bool = args.check_now
 
-    if args.update_now:
+    if args.latitude is not None and args.longitude is not None:
+        coords = tuple([args.latitude, args.longitude])
+        sunrise_sunset = GetTimeOfSunriseSunset(args.verbose, args.override)
+        return sunrise_sunset(coords, args.verbose)
+
+    elif args.use_geoclue:
         return run_once(args.verbose, args.override, args.check_now)
+
     elif args.check_now:
         return check()
-        if sys.platform == "linux":
-            if args.install_systemd_units:
-                return Services().setup()
-            elif args.remove_systemd:
-                return Services().destroy()
+
+    if sys.platform == "linux":
+        if args.install_systemd_units:
+            return Services().setup()
+        elif args.remove_systemd:
+            return Services().destroy()
     else:
         parser.print_help()
