@@ -7,6 +7,7 @@ import argparse
 
 
 def check():
+    print("check")
     is_day_or_night()
 
 
@@ -107,3 +108,7 @@ def main():
 
     else:
         parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

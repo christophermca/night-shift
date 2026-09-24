@@ -30,15 +30,15 @@ class GetTimeOfSunriseSunset:
         self.settings = Settings()
         self.agent = None
 
-        coords: tuple(float, float) | None
+        coords: tuple[float, float] | None
 
         print(f"use geoclue: {self.use_geoclue}")
         if not self.use_geoclue:
-            coords: tuple(float, float) = (
+            coords: tuple[float, float] = (
                 self._get_static_location_from_settings()
             )
         else:
-            coords: tuple(float, float) = self._get_location()
+            coords: tuple[float, float] = self._get_location()
 
         if coords:
             print(f"coords: {coords}")
@@ -47,7 +47,7 @@ class GetTimeOfSunriseSunset:
     def __call__(self, coords, verbose=False):
         return self._get_sunrise_sunset(*coords, verbose)
 
-    def _get_location(self) -> tuple(float, float):
+    def _get_location(self) -> tuple[float, float]:
         try:
 
             # Get location data from Geoclue
@@ -130,7 +130,7 @@ class GetTimeOfSunriseSunset:
 
     def _get_sunrise_sunset(
         self, lat: float, lng: float, verbose: bool
-    ) -> tuple(float, float):
+    ) -> tuple[float, float]:
         try:
             params = {"lat": lat, "lng": lng}
 
@@ -197,7 +197,7 @@ class GetTimeOfSunriseSunset:
             print(f"ERROR SAVING {e}")
             print(f"{data}")
 
-    def _get_static_location_from_settings(self) -> tuple(float, float):
+    def _get_static_location_from_settings(self) -> tuple[float, float]:
 
         if callable(self.settings()):
             lat = self.settings().get_string("static-latitude")

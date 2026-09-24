@@ -11,10 +11,9 @@ def mock_settings():
     return settings
 
 
-def test_settings():
-    MockedGio = MagicMock()
-    MockedGio.Settings.new_full.return_value = ["6:00", "18:30"]
-
+@patch("night_shift.bin.is_day_or_night._settings")
+def test_settings(mock_settings_func, mock_settings):
+    mock_settings_func.return_value = mock_settings
     is_day_or_night()
 
 
