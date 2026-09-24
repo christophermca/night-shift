@@ -4,9 +4,10 @@ from gi.repository import Gio
 
 
 class Settings:
+    def __call__(self, *args, **kwargs):
+        return self.settings
 
     def __init__(self):
-
         # Load schema
         SCHEMA_ID = "org.gnome.shell.extensions.night-shift"
 
@@ -30,8 +31,11 @@ class Settings:
             settings = Gio.Settings.new_full(schemaObj, None, None)
 
             self.settings = settings
-            return 3
 
         except Exception as e:
             print(f"Error {e}")
             return None
+
+
+if __name__ == "__main__":
+    main()

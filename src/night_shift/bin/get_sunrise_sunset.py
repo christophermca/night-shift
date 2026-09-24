@@ -7,6 +7,7 @@ import argparse
 import requests
 import time
 import subprocess
+from typing import Any
 from night_shift.bin.settings import Settings
 from datetime import datetime
 
@@ -21,82 +22,87 @@ class GetTimeOfSunriseSunset:
         self,
         verbose: bool = False,
         override: bool = False,
+        use_geoclue: bool = False,
     ):
         self.override = override
+        self.verbose = verbose
+        self.use_geoclue = use_geoclue
         self.settings = Settings()
         self.agent = None
 
-        coords: tuple(float, float) = self._get_location()
+        coords: tuple(float, float) | None
+
+        print(f"use geoclue: {self.use_geoclue}")
+        if not self.use_geoclue:
+            coords: tuple(float, float) = (
+                self._get_static_location_from_settings()
+            )
+        else:
+            coords: tuple(float, float) = self._get_location()
 
         if coords:
-            self._get_sunrise_sunset(*coords, verbose)
+            print(f"coords: {coords}")
+            self._get_sunrise_sunset(*coords, self.verbose)
 
     def __call__(self, coords, verbose=False):
         return self._get_sunrise_sunset(*coords, verbose)
 
     def _get_location(self) -> tuple(float, float):
         try:
-            use_geoclue: bool | None = None
 
-            print(f"hello {self.settings}")
-            if callable(self.settings):
-                print(f"geoclue:{use_geoclue}")
-                use_geoclue = self.settings.get_boolean("use-geoclue")
-
-            if not use_geoclue:
-                coords: tuple(float, float) = self._get_static_location()
-            else:
-                # Get location data from Geoclue
-                if self.agent is None:
-                    self.agent = subprocess.Popen(
-                        ["/usr/lib/geoclue-2.0/demos/agent"]
-                    )
-                geoclue_data = subprocess.Popen(
-                    [
-                        "/usr/lib/geoclue-2.0/demos/where-am-i",
-                        "--accuracy-level=8",
-                        "--time-threshold=3",
-                    ],  # `run /usr/lib/geoclue-2.0/demo/where-am-i -h` for more information about options
-                    text=True,
-                    stdout=subprocess.PIPE,
+            # Get location data from Geoclue
+            if self.agent is None:
+                self.agent = subprocess.Popen(
+                    ["/usr/lib/geoclue-2.0/demos/agent"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
                 )
 
-                regex = r"^(Lat.*:|Long.*:).*([\.\-\d+]+)"
-                timestamp = r"^(Timestamp:).*([\.\-\d+]+)"
+            geoclue_data = subprocess.Popen(
+                [
+                    "/usr/lib/geoclue-2.0/demos/where-am-i",
+                    "--accuracy-level=8",
+                    "--time-threshold=3",
+                ],  # `run /usr/lib/geoclue-2.0/demo/where-am-i -h` for more information about options
+                text=True,
+                stdout=subprocess.PIPE,
+            )
 
-                # READS response for LAT and LNG
-                arr = []
+            regex = r"^(Lat.*:|Long.*:).*([\.\-\d+]+)"
+            timestamp = r"^(Timestamp:).*([\.\-\d+]+)"
 
-                for line in iter(geoclue_data.stdout.readline, ""):
-                    match = re.match(regex, line)
+            # READS response for LAT and LNG
+            arr = []
 
-                    if match:
-                        matched_string = match.group().split()[1]
-                        arr.append(float(matched_string))
+            for line in iter(geoclue_data.stdout.readline, ""):
+                match = re.match(regex, line)
 
-                    if len(arr) == 2:
-                        geoclue_data.terminate()
-                        break
+                if match:
+                    matched_string = match.group().split()[1]
+                    arr.append(float(matched_string))
 
-                if not arr:
-                    raise TypeError(
-                        "Could not determine location. Please check your geoclue configuration"
-                    )
-                coords = tuple(arr)
+                if len(arr) == 2:
+                    geoclue_data.terminate()
+                    break
 
-                if callable(self.settings):
-                    previous_coordinates = self.settings.get_value(
-                        "last-known-coordinates"
-                    )
+            if not arr:
+                raise TypeError(
+                    "Could not determine location. Please check your geoclue configuration"
+                )
+            coords = tuple(arr)
 
-                    if self.override or (coords == previous_coordinates):
-                        last_known_coordinates = GLib.Variant("(dd)", coords)
-                        data: dict[str, any] = {
-                            "last-known-coordinates",
-                            last_known_coordinates,
-                        }
-                        self._save(data)
-                    return coords
+            if callable(self.settings().get_value):
+                previous_coordinates = self.settings().get_value(
+                    "last-known-coordinates"
+                )
+
+                if self.override or (coords == previous_coordinates):
+                    last_known_coordinates = GLib.Variant("(dd)", coords)
+                    data: dict = {
+                        "last-known-coordinates": last_known_coordinates,
+                    }
+                    self._save(data)
+            return coords
 
         except subprocess.TimeoutExpired as e:
             print(f"TimeoutExpired: {e.timeout} seconds\n\n {e.stdout}")
@@ -134,7 +140,7 @@ class GetTimeOfSunriseSunset:
 
             response_data = response.json()
 
-            if verbose:
+            if self.verbose:
                 json_string = json.dumps(
                     response_data, indent=4, sort_keys=True
                 )
@@ -150,22 +156,20 @@ class GetTimeOfSunriseSunset:
 
             times = (sunrise, sunset)
 
-            saved: dict[str, any] = {}
+            saved: dict[str, Any] = {}
 
-            # update settings
-            if callable(self.settings):
-                print(
-                    f"night-shift {response_data.get('sunrise'), response_data.get('sunset'), response_data.get('tzid')}"
-                )
+            print(
+                f"night-shift {response_data.get('sunrise'), response_data.get('sunset'), response_data.get('tzid')}"
+            )
 
-                times_tuple = GLib.Variant("(ss)", times)
-                saved = {
-                    "timestamp": f"{datetime.now().astimezone().isoformat()}",
-                    "tzid": tzid,
-                    "times": times_tuple,
-                }
+            times_tuple = GLib.Variant("(ss)", times)
+            saved = {
+                "timestamp": f"{datetime.now().astimezone().isoformat()}",
+                "tzid": tzid,
+                "times": times_tuple,
+            }
 
-                self._save(saved)
+            self._save(saved)
 
             return times
 
@@ -173,36 +177,37 @@ class GetTimeOfSunriseSunset:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
 
     def _save(self, data) -> None:
-        print(f"in save {data}")
-        if callable(self.settings):
-            for key, value in data:
-                match type(value):
+        try:
+            for key, value in data.items():
+
+                match value:
                     case str():
-                        print(
-                            f"saving {key} as type {type(value)} with {value}"
-                        )
-                        self.settings.set_string(f"{key}", value)
+                        self.settings().set_string(key, value)
                     case bool():
-                        f"saving {key} as type {type(value)} with {value}"
-                        self.settings.set_bool(f"{key}", value)
+                        self.settings().set_bool(key, value)
                     case int():
-                        f"saving {key} as type {type(value)} with {value}"
-                        self.settings.set_int(f"{key}", value)
+                        self.settings().set_int(key, value)
                     case _:
-                        f"saving {key} as type {type(value)} with {value}"
-                        self.settings.set_value(f"{key}", value)
+                        self.settings().set_value(key, value)
 
-    def _get_static_location(self) -> tuple(float, float):
+            if self.verbose:
+                print(f"{data}")
 
-        if callable(self.settings):
-            lat = self.settings.get_string("static-latitude")
-            lng = self.settings.get_string("static-longitude")
+        except Exception as e:
+            print(f"ERROR SAVING {e}")
+            print(f"{data}")
+
+    def _get_static_location_from_settings(self) -> tuple(float, float):
+
+        if callable(self.settings()):
+            lat = self.settings().get_string("static-latitude")
+            lng = self.settings().get_string("static-longitude")
 
             if lat and lng:
                 static_location = (float(lat), float(lng))
 
                 last_known_coordinates = GLib.Variant("(dd)", static_location)
-                self.settings.set_value(
+                self.settings().set_value(
                     "last-known-coordinates", last_known_coordinates
                 )
 

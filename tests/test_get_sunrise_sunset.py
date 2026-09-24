@@ -17,26 +17,50 @@ def mock_settings():
 
 
 @patch(
-    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
-)
-@patch(
     "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
 )
-def test_get_sunrise_sunset_success(
-    mock_get_api, mock_get_location, mock_settings
-):
-    """Test successful sunrise/sunset fetch"""
-    mock_get_location.return_value = (40.7128, -74.0060)  # NYC coordinates
+@patch(
+    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
+)
+class TestGetSunriseSunset:
+    def test_get_sunrise_sunset_init(
+        self, mock_get_api, mock_get_location, mock_settings
+    ):
+        object = GetTimeOfSunriseSunset(
+            verbose=True, use_geoclue=True, override=True
+        )
 
-    GetTimeOfSunriseSunset(debug=False)
+        assert object.verbose is True
+        assert object.use_geoclue is True
+        assert object.override is True
 
-    # Verify API was called with coordinates
-    mock_get_api.assert_called_once_with(40.7128, -74.0060, False)
+    def test_get_sunrise_sunset__call(
+        self, mock_get_api, mock_get_location, mock_settings
+    ):
+        coords = (40.7128, -74.0060)  # NYC coordinates
+        sunrise_sunset = GetTimeOfSunriseSunset(
+            verbose=False, use_geoclue=True
+        )
+        sunrise_sunset(coords)
 
+    def test_get_sunrise_sunset_times_success(
+        self, mock_get_api, mock_get_location, mock_settings
+    ):
+        """Test successful sunrise/sunset fetch"""
+        mock_get_location.return_value = (40.7128, -74.0060)  # NYC coordinates
 
-@patch("night_shift.bin.get_sunrise_sunset.requests.get")
-def test_get_sunrise_sunset_http_error(mock_get):
-    """Test handling of HTTP errors"""
-    mock_get.side_effect = requests.exceptions.HTTPError("HTTP 500")
+        GetTimeOfSunriseSunset(use_geoclue=True)
 
-    GetTimeOfSunriseSunset(debug=False, override=True)
+        mock_get_api.assert_called_once_with(40.7128, -74.0060, False)
+        # mock_get_api.assert_called_once_with(40.7128, -74.0060, False)
+
+    def test_get_location_override(self, mock_get_api, mock_settings):
+        GetTimeOfSunriseSunset(verbose=False, use_geoclue=True, override=True)
+
+    def test_get_sunrise_sunset_times_http_error(
+        self, mock_get_api, mock_get, mock_settings
+    ):
+        """Test handling of HTTP errors"""
+        mock_get.side_effect = requests.exceptions.HTTPError("HTTP 500")
+
+        GetTimeOfSunriseSunset(verbose=False, override=True)
