@@ -21,10 +21,18 @@ schema_dir = os.path.expanduser(
     / "schemas"
 )
 
-# Load schema
-schema_source = Gio.SettingsSchemaSource.new_from_directory(
-    schema_dir, Gio.SettingsSchemaSource.get_default(), False
-)
+# Schema is loaded lazily (on first use) rather than at import time, so this
+# module can be imported/tested without a compiled schema on disk.
+_schema_source = None
+
+
+def _get_schema_source():
+    global _schema_source
+    if _schema_source is None:
+        _schema_source = Gio.SettingsSchemaSource.new_from_directory(
+            schema_dir, Gio.SettingsSchemaSource.get_default(), False
+        )
+    return _schema_source
 
 
 def is_day_or_night():
@@ -51,8 +59,8 @@ def is_day_or_night():
 
 def _settings() -> object:
     # initialize gsettings obj
-    schemaObj = schema_source.lookup(SCHEMA_ID, True)
-    settings = Gio.Settings.new_full(schemaObj, None, None)
+    schema_obj = _get_schema_source.lookup(SCHEMA_ID, True)
+    settings = Gio.Settings.new_full(schema_obj, None, None)
 
     return settings
 

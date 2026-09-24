@@ -16,6 +16,28 @@ def mock_settings():
     return settings
 
 
+###
+# Suggested code snippet by Claude Sonnet5
+###
+@pytest.fixture(autouse=True)
+def _patch_settings(mock_settings):
+    """Prevent GetTimeOfSunriseSunset.__init__ from touching real GSettings.
+
+    `Settings()` is instantiated unconditionally in __init__, and its
+    __init__ reaches out to the real (compiled) GNOME schema on disk.
+    Patch the class so `self.settings()` resolves to `mock_settings`,
+    matching Settings.__call__'s behavior.
+    """
+    with patch(
+        "night_shift.bin.get_sunrise_sunset.Settings"
+    ) as mock_settings_class:
+        mock_settings_class.return_value.return_value = mock_settings
+        yield mock_settings_class
+
+
+### END of suggested code snippet
+
+
 @patch(
     "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
 )
@@ -23,9 +45,7 @@ def mock_settings():
     "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
 )
 class TestGetSunriseSunset:
-    def test_get_sunrise_sunset_init(
-        self, mock_get_api, mock_get_location, mock_settings
-    ):
+    def test_get_sunrise_sunset_init(self, mock_get_location, mock_settings):
         object = GetTimeOfSunriseSunset(
             verbose=True, use_geoclue=True, override=True
         )
@@ -34,9 +54,7 @@ class TestGetSunriseSunset:
         assert object.use_geoclue is True
         assert object.override is True
 
-    def test_get_sunrise_sunset__call(
-        self, mock_get_api, mock_get_location, mock_settings
-    ):
+    def test_get_sunrise_sunset__call(self, mock_get_location, mock_settings):
         coords = (40.7128, -74.0060)  # NYC coordinates
         sunrise_sunset = GetTimeOfSunriseSunset(
             verbose=False, use_geoclue=True
@@ -44,21 +62,24 @@ class TestGetSunriseSunset:
         sunrise_sunset(coords)
 
     def test_get_sunrise_sunset_times_success(
-        self, mock_get_api, mock_get_location, mock_settings
+        self, mock_get_location, mock_get_sunrise_sunset, mock_settings
     ):
         """Test successful sunrise/sunset fetch"""
         mock_get_location.return_value = (40.7128, -74.0060)  # NYC coordinates
 
         GetTimeOfSunriseSunset(use_geoclue=True)
 
-        mock_get_api.assert_called_once_with(40.7128, -74.0060, False)
-        # mock_get_api.assert_called_once_with(40.7128, -74.0060, False)
+        mock_get_sunrise_sunset.assert_called_once_with(
+            40.7128, -74.0060, False
+        )
 
-    def test_get_location_override(self, mock_get_api, mock_settings):
+    def test_get_location_override(
+        self, mock_get_location, mock_get_sunrise_sunset, mock_settings
+    ):
         GetTimeOfSunriseSunset(verbose=False, use_geoclue=True, override=True)
 
     def test_get_sunrise_sunset_times_http_error(
-        self, mock_get_api, mock_get, mock_settings
+        self, mock_get, mock_settings
     ):
         """Test handling of HTTP errors"""
         mock_get.side_effect = requests.exceptions.HTTPError("HTTP 500")
