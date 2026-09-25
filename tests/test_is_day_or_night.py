@@ -69,3 +69,18 @@ def test_is_day_or_night_during_night(mock_settings_func, mock_settings):
         is_day_or_night()
 
         mock_settings.set_string.assert_called_with("day-or-night", "night")
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=AttributeError,
+    reason="BUG: _settings() calls _get_schema_source.lookup without calling _get_schema_source()",
+)
+@patch("night_shift.bin.is_day_or_night.Gio")
+def test_settings_builds_gio_settings(mock_gio):
+    from night_shift.bin import is_day_or_night as module
+
+    module._schema_source = None
+    settings = module._settings()
+
+    assert settings is mock_gio.Settings.new_full.return_value
