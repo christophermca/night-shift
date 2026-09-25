@@ -60,11 +60,10 @@ def is_day_or_night():
 
 def _settings() -> object:
     # initialize gsettings obj
-    schema_obj = _get_schema_source.lookup(SCHEMA_ID, True)
+    data = _get_schema_source()
+    schema_obj = data.lookup(SCHEMA_ID, True)
+
+    print(schema_obj)
     settings = Gio.Settings.new_full(schema_obj, None, None)
 
     return settings
-
-
-# if __name__ == "__main__":
-#     is_day_or_night()
