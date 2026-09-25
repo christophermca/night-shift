@@ -21,40 +21,50 @@ schema_dir = os.path.expanduser(
     / "schemas"
 )
 
-# Load schema
-schema_source = Gio.SettingsSchemaSource.new_from_directory(
-    schema_dir, Gio.SettingsSchemaSource.get_default(), False
-)
+# Schema is loaded lazily (on first use) rather than at import time, so this
+# module can be imported/tested without a compiled schema on disk.
+_schema_source = None
+
+
+def _get_schema_source():
+    global _schema_source
+    if _schema_source is None:
+        _schema_source = Gio.SettingsSchemaSource.new_from_directory(
+            schema_dir, Gio.SettingsSchemaSource.get_default(), False
+        )
+    return _schema_source
 
 
 def is_day_or_night():
     settings = _settings()
 
     times: list[str] = settings.get_value("times")
+    print(f"times{times}")
     [sunrise, sunset] = times
     current_time = datetime.now().strftime("%H:%M")  # 24hr format
 
     # check if currrent time is after sunrise or sunset
     DAY_NIGHT: str
 
-    if current_time >= sunrise:
+    if sunrise <= current_time < sunset:
         DAY_NIGHT = "day"
-
-    if current_time >= sunset:
+    else:
         DAY_NIGHT = "night"
 
     # set day-or-night
     if DAY_NIGHT:
         settings.set_string("day-or-night", DAY_NIGHT)
 
+        print(f"{DAY_NIGHT}time")
+
 
 def _settings() -> object:
     # initialize gsettings obj
-    schemaObj = schema_source.lookup(SCHEMA_ID, True)
-    settings = Gio.Settings.new_full(schemaObj, None, None)
+    schema_obj = _get_schema_source.lookup(SCHEMA_ID, True)
+    settings = Gio.Settings.new_full(schema_obj, None, None)
 
     return settings
 
 
-if __name__ == "__main__":
-    is_day_or_night()
+# if __name__ == "__main__":
+#     is_day_or_night()

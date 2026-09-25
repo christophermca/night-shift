@@ -5,6 +5,6 @@ After=graphical-session.target
 
 [Service]
 Type=oneshot
-ExecStart=/home/%u/.local/share/gnome-shell/extensions/night-shift@christophermca.github.io/bin/is_day_or_night.py
+ExecStart=/home/%u/.local/bin/night-shift -c
 
 Restart=no

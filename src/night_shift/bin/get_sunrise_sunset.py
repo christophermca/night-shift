@@ -1,97 +1,107 @@
 #!/usr/bin/python
 
-import os
 import re
 import gi
 import json
 import argparse
 import requests
+import time
 import subprocess
-
-from pathlib import Path
+from typing import Any
+from night_shift.bin.settings import Settings
 from datetime import datetime
 
 gi.require_version("Gio", "2.0")
-from gi.repository import Gio, GLib
+from gi.repository import GLib
 
 NOAA = "https://api.sunrise-sunset.org/v2"
-SCHEMA_ID = "org.gnome.shell.extensions.night-shift"
-
-schema_dir = os.path.expanduser(
-    Path.home()
-    / ".local"
-    / "share"
-    / "gnome-shell"
-    / "extensions"
-    / "night-shift@christophermca.github.io"
-    / "schemas"
-)
-
-# Load schema
-schema_source = Gio.SettingsSchemaSource.new_from_directory(
-    schema_dir, Gio.SettingsSchemaSource.get_default(), False
-)
-
-
-def _settings() -> object:
-    # initialize gsettings obj
-    schemaObj = schema_source.lookup(SCHEMA_ID, True)
-    settings = Gio.Settings.new_full(schemaObj, None, None)
-
-    return settings
 
 
 class GetTimeOfSunriseSunset:
-    def __init__(self, debug: bool = False, override: bool = False):
-        self.settings = _settings()
-        coords: tuple(float, float) = self._get_location(override)
-        if coords:
-            self._get_sunrise_sunset(*coords, debug)
+    def __init__(
+        self,
+        verbose: bool = False,
+        override: bool = False,
+        use_geoclue: bool = False,
+    ):
+        self.override = override
+        self.verbose = verbose
+        self.use_geoclue = use_geoclue
+        self.settings = Settings()
+        self.agent = None
 
-    def _get_location(self, override: bool) -> tuple(float, float):
+        coords: tuple[float, float] | None
+
+        print(f"use geoclue: {self.use_geoclue}")
+        if not self.use_geoclue:
+            coords: tuple[float, float] = (
+                self._get_static_location_from_settings()
+            )
+        else:
+            coords: tuple[float, float] = self._get_location()
+
+        if coords:
+            print(f"coords: {coords}")
+            self._get_sunrise_sunset(*coords, self.verbose)
+
+    def __call__(self, coords, verbose=False):
+        return self._get_sunrise_sunset(*coords, verbose)
+
+    def _get_location(self) -> tuple[float, float]:
         try:
-            useGeoclue = self.settings.get_boolean("use-geoclue")
-            if not useGeoclue:
-                coords: tuple(float, float) = _get_static_location()
-            else:
-                # Get location data from Geoclue
-                agent = subprocess.Popen(["/usr/lib/geoclue-2.0/demos/agent"])
-                geoclue_data = subprocess.Popen(
-                    [
-                        "/usr/lib/geoclue-2.0/demos/where-am-i",
-                        "--accuracy-level=8",
-                        "--time-threshold=3",
-                    ],  # `run /usr/lib/geoclue-2.0/demo/where-am-i -h` for more information about options
-                    text=True,
-                    stdout=subprocess.PIPE,
+
+            # Get location data from Geoclue
+            if self.agent is None:
+                self.agent = subprocess.Popen(
+                    ["/usr/lib/geoclue-2.0/demos/agent"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
                 )
 
-                regex = r"^(Lat.*:|Long.*:).*([\.\-\d+]+)"
-                timestamp = r"^(Timestamp:).*([\.\-\d+]+)"
+            geoclue_data = subprocess.Popen(
+                [
+                    "/usr/lib/geoclue-2.0/demos/where-am-i",
+                    "--accuracy-level=8",
+                    "--time-threshold=3",
+                ],  # `run /usr/lib/geoclue-2.0/demo/where-am-i -h` for more information about options
+                text=True,
+                stdout=subprocess.PIPE,
+            )
 
-                # READS response for LAT and LNG
-                arr = []
+            regex = r"^(Lat.*:|Long.*:).*([\.\-\d+]+)"
+            timestamp = r"^(Timestamp:).*([\.\-\d+]+)"
 
-                for line in iter(geoclue_data.stdout.readline, ""):
-                    match = re.match(regex, line)
+            # READS response for LAT and LNG
+            arr = []
 
-                    if match:
-                        matched_string = match.group().split()[1]
-                        arr.append(float(matched_string))
+            for line in iter(geoclue_data.stdout.readline, ""):
+                match = re.match(regex, line)
 
-                    if len(arr) == 2:
-                        geoclue_data.terminate()
-                        break
+                if match:
+                    matched_string = match.group().split()[1]
+                    arr.append(float(matched_string))
 
-                if not arr:
-                    raise TypeError(
-                        "Could not determine location. Please check your geoclue configuration"
-                    )
-                coords = tuple(arr)
+                if len(arr) == 2:
+                    geoclue_data.terminate()
+                    break
 
-                # did location update?
-            self._save(coords, override)
+            if not arr:
+                raise TypeError(
+                    "Could not determine location. Please check your geoclue configuration"
+                )
+            coords = tuple(arr)
 
+            if callable(self.settings().get_value):
+                previous_coordinates = self.settings().get_value(
+                    "last-known-coordinates"
+                )
+
+                if self.override or (coords == previous_coordinates):
+                    last_known_coordinates = GLib.Variant("(dd)", coords)
+                    data: dict = {
+                        "last-known-coordinates": last_known_coordinates,
+                    }
+                    self._save(data)
             return coords
 
         except subprocess.TimeoutExpired as e:
@@ -104,14 +114,23 @@ class GetTimeOfSunriseSunset:
 
         finally:
             try:
-                if agent.poll():
-                    print("Terminating geoclue agent")
-                    agent.terminate()  # Gracefully exits
-                    agent.wait()  # Prevents zombie processes
-            except NameError:
-                pass
+                if callable(self.agent):
+                    while True:
+                        if self.agent.poll() is None:
+                            print("process still running")
+                            time.sleep(1)
 
-    def _get_sunrise_sunset(self, lat: float, lng: float, debug: bool):
+                        print("Terminating geoclue agent")
+                        self.agent.kill()  # Gracefully exits
+                        self.agent.wait()  # Prevents zombie processes
+                        break
+
+            except Exception as e:
+                print(f"Error: {e}")
+
+    def _get_sunrise_sunset(
+        self, lat: float, lng: float, verbose: bool
+    ) -> tuple[float, float]:
         try:
             params = {"lat": lat, "lng": lng}
 
@@ -119,86 +138,80 @@ class GetTimeOfSunriseSunset:
             response = requests.get(NOAA, params)
             response.raise_for_status()
 
-            data = response.json()
+            response_data = response.json()
 
-            if debug:
-                json_string = json.dumps(data, indent=4, sort_keys=True)
+            if self.verbose:
+                json_string = json.dumps(
+                    response_data, indent=4, sort_keys=True
+                )
                 print(f"[night-shift] {json_string}")
 
-            tzid = data["tzid"]
-            sunrise = datetime.fromisoformat(data["sunrise"]).strftime("%H:%M")
-            sunset = datetime.fromisoformat(data["sunset"]).strftime("%H:%M")
+            tzid = response_data["tzid"]
+            sunrise = datetime.fromisoformat(
+                response_data["sunrise"]
+            ).strftime("%H:%M")
+            sunset = datetime.fromisoformat(response_data["sunset"]).strftime(
+                "%H:%M"
+            )
 
             times = (sunrise, sunset)
 
-            # update settings
-            self.settings.set_string(
-                "timestamp", f"{datetime.now().astimezone().isoformat()}"
-            )
-            print(
-                f"night-shift {data.get('sunrise'), data.get('sunset'), data.get('tzid')}"
-            )
-            self.settings.set_string("tzid", tzid)
-            times_tuple = GLib.Variant("(ss)", times)
+            saved: dict[str, Any] = {}
 
-            self.settings.set_value("times", times_tuple)
+            print(
+                f"night-shift {response_data.get('sunrise'), response_data.get('sunset'), response_data.get('tzid')}"
+            )
+
+            times_tuple = GLib.Variant("(ss)", times)
+            saved = {
+                "timestamp": f"{datetime.now().astimezone().isoformat()}",
+                "tzid": tzid,
+                "times": times_tuple,
+            }
+
+            self._save(saved)
+
+            return times
 
         except requests.exceptions.HTTPError as http_err:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
 
-        finally:
-            print("Done")
+    def _save(self, data) -> None:
+        try:
+            for key, value in data.items():
 
-    def _save(self, coords: tuple(float, float), override=False) -> None:
-        previous_coordinates = self.settings.get_value(
-            "last-known-coordinates"
-        )
+                match value:
+                    case str():
+                        self.settings().set_string(key, value)
+                    case bool():
+                        self.settings().set_bool(key, value)
+                    case int():
+                        self.settings().set_int(key, value)
+                    case _:
+                        self.settings().set_value(key, value)
 
-        if override or (coords == previous_coordinates):
+            if self.verbose:
+                print(f"{data}")
 
-            last_known_coordinates = GLib.Variant("(dd)", coords)
-            self.settings.set_value(
-                "last-known-coordinates", last_known_coordinates
-            )
-            return coords
-        else:
-            coords_string = ",".join(map(str, coords))
-            print(
-                f"Locations are the same (old/new) '{previous_coordinates}'/'{coords_string}'"
-            )
+        except Exception as e:
+            print(f"ERROR SAVING {e}")
+            print(f"{data}")
 
-    def _get_static_location(self) -> tuple(float, float):
+    def _get_static_location_from_settings(self) -> tuple[float, float]:
 
-        lat = self.settings.get_string("static-latitude")
-        lng = self.settings.get_string("static-longitude")
+        if callable(self.settings()):
+            lat = self.settings().get_string("static-latitude")
+            lng = self.settings().get_string("static-longitude")
 
-        if lat and lng:
-            static_location = (float(lat), float(lng))
+            if lat and lng:
+                static_location = (float(lat), float(lng))
 
-            last_known_coordinates = GLib.Variant("(dd)", static_location)
-            self.settings.set_value(
-                "last-known-coordinates", last_known_coordinates
-            )
+                last_known_coordinates = GLib.Variant("(dd)", static_location)
+                self.settings().set_value(
+                    "last-known-coordinates", last_known_coordinates
+                )
 
-            return static_location
+                return static_location
 
-        else:
-            print("Missing required keys")
-
-
-def main():
-    # Parse commendline arguments
-    parser = argparse.ArgumentParser(
-        description="Get the times for the sunrise/sunset"
-    )
-    parser.add_argument("-f", "--force", dest="override", action="store_true")
-    parser.add_argument("-d", "--debug", action="store_true")
-    args = parser.parse_args()
-
-    # Run
-
-    GetTimeOfSunriseSunset(**vars(args))
-
-
-if __name__ == "__main__":
-    main()
+            else:
+                print("Missing required keys")

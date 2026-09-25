@@ -1,7 +1,3 @@
-
-MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-
-
 .PHONY: test
 test:
 	 virtualenv venv && \
