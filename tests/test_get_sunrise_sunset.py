@@ -15,9 +15,6 @@ from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 def mock_settings():
     """Mock Gio.Settings object"""
     settings = MagicMock()
-    # LEARN: These defaults matter. With empty static coordinates,
-    # `__init__` prints "Missing required keys" and does NOT fetch. That
-    # gives most tests a quiet object to start from.
     settings.get_string.return_value = ""
     settings.get_boolean.return_value = (
         False  # defaults to using "static location"
@@ -29,20 +26,6 @@ def mock_settings():
 ###
 # Suggested code snippet by Claude Sonnet5
 ###
-# LEARN: `autouse=True` means every test in this file uses this fixture
-# without asking for it. It's Jest's top-level `beforeEach` or a JUnit
-# `@BeforeEach` in a base class. Keep autouse for things that must ALWAYS
-# happen, like "never touch the real GNOME settings". To share it across
-# files, move it into `tests/conftest.py`, which pytest loads automatically
-# (like Jest's `setupFilesAfterEnv`).
-#
-# How it works: `__init__` does `self.settings = Settings()`, and the code
-# then calls `self.settings()` to get the Gio object. So:
-#   Settings                            -> mock_settings_class (the class)
-#   Settings()                          -> .return_value        (an instance)
-#   Settings()()   i.e. self.settings() -> .return_value.return_value
-# Setting that last one to `mock_settings` means the fixture above is
-# exactly what the code sees, so tests can assert on it.
 @pytest.fixture(autouse=True)
 def _patch_settings(mock_settings):
     """Prevent GetTimeOfSunriseSunset.__init__ from touching real GSettings.
@@ -62,21 +45,6 @@ def _patch_settings(mock_settings):
 ### END of suggested code snippet
 
 
-# LEARN: `@patch` on a *class* applies to every `test_*` method in it.
-# That's handy, but it sets a trap worth studying:
-#
-# 1. Order. Stacked decorators apply bottom-up, so the BOTTOM patch
-#    (`_get_location`) becomes the FIRST argument after `self`, and the top
-#    one (`_get_sunrise_sunset`) becomes the second.
-# 2. Every method receives BOTH mocks, whether it lists them or not. Python
-#    passes them by position, and the parameter names don't matter. Only
-#    after them do real fixtures get injected by name.
-#
-# So in `test_get_sunrise_sunset_init(self, mock_get_location, mock_settings)`
-# below, `mock_settings` is NOT the fixture. It's the `_get_sunrise_sunset`
-# mock under the wrong name. The test happens to pass because it never uses
-# it. `test_get_sunrise_sunset_times_success` lists all three and gets them
-# right. When a mock-argument test acts strangely, check this first.
 @patch(
     "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
 )
@@ -84,11 +52,9 @@ def _patch_settings(mock_settings):
     "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
 )
 class TestGetSunriseSunset:
-    # LEARN: Test classes just group related tests. There's no inheritance
-    # needed, and they must NOT define `__init__` or pytest skips them. Each
-    # test method gets a fresh instance, so don't try to share state
-    # through `self`.
-    def test_get_sunrise_sunset_init(self, mock_get_location, mock_settings):
+    def test_get_sunrise_sunset_init(
+        self, mock_get_location, mock_get_sunrise_sunset, mock_settings
+    ):
         object = GetTimeOfSunriseSunset(
             verbose=True, use_geoclue=True, override=True
         )
@@ -112,10 +78,6 @@ class TestGetSunriseSunset:
 
         GetTimeOfSunriseSunset(use_geoclue=True)
 
-        # LEARN: This is testing the *wiring*: whatever `_get_location`
-        # returns gets unpacked into `_get_sunrise_sunset`. Both methods
-        # are mocked, so this proves `__init__` connects them properly
-        # without running either one.
         mock_get_sunrise_sunset.assert_called_once_with(
             40.7128, -74.0060, False
         )
@@ -168,21 +130,11 @@ API_PAYLOAD = {
 }
 
 
-# LEARN: Unlike the class above, these tests do NOT mock
-# `_get_sunrise_sunset`. They run the real method and mock only the
-# network (`requests.get`). Mock at the outermost edge you can: the more
-# real code a test runs, the more it proves.
 class TestFetchSunriseSunset:
-    # LEARN: Patch `requests.get` as get_sunrise_sunset.py sees it. The
-    # module does `import requests` and then calls `requests.get(...)`, so
-    # the target is `<module>.requests.get`.
     @patch("night_shift.bin.get_sunrise_sunset.requests.get")
     def test_returns_hh_mm_times(self, mock_get, mock_settings):
         mock_get.return_value = _mock_response(API_PAYLOAD)
 
-        # LEARN: `GetTimeOfSunriseSunset()` builds the object, and the second
-        # `(...)` calls its `__call__` method. It's like calling a function
-        # object in JS.
         times = GetTimeOfSunriseSunset()((40.7128, -74.0060))
 
         assert times == ("06:52", "18:51")
@@ -205,9 +157,6 @@ class TestFetchSunriseSunset:
         GetTimeOfSunriseSunset()((40.7128, -74.0060))
 
         mock_settings.set_string.assert_any_call("tzid", "America/New_York")
-        # LEARN: The timestamp is "now", so we can't predict its value. We
-        # assert it was saved exactly once and leave the value alone. Only
-        # assert what the test can know for sure.
         timestamp_calls = [
             c
             for c in mock_settings.set_string.call_args_list
