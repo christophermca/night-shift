@@ -4,11 +4,11 @@
 Usage:
     mutation_check.py FILE OLD NEW [-- PYTEST_ARGS...]
 
-Replaces the first occurrence of OLD with NEW in FILE, runs pytest (with
+Replaces OLD (which must occur exactly once) with NEW in FILE, runs pytest (with
 PYTEST_ARGS, e.g. a test path and -k filter), then always restores FILE.
 
 Exit status: 0 if the mutant was caught (pytest failed), 1 if it survived
-(tests stayed green: they don't protect this code), 2 on usage errors.
+(tests stayed green: they don't protect this code), 2 on usage errors or if pytest itself errors.
 """
 import os
 import subprocess
@@ -29,8 +29,14 @@ def main(argv):
 
     path, old, new = Path(args[0]), args[1], args[2]
     original = path.read_text()
-    if old not in original:
-        print(f"'{old}' not found in {path}", file=sys.stderr)
+    count = original.count(old)
+    if count != 1:
+        # A non-unique OLD would silently mutate whichever copy comes first,
+        # possibly in a different function than the one under review.
+        problem = "not found" if count == 0 else f"found {count} times"
+        print(f"'{old}' {problem} in {path}; include more context "
+              "(e.g. the preceding line, joined with a newline) so it "
+              "matches exactly once", file=sys.stderr)
         return 2
 
     env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
