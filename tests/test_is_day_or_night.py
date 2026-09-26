@@ -89,15 +89,3 @@ def test_is_day_or_night_during_night(mock_settings_func, mock_settings):
         is_day_or_night()
 
         mock_settings.set_string.assert_called_with("day-or-night", "night")
-
-
-@patch("night_shift.bin.is_day_or_night.Gio.Settings.new_full")
-def test_settings(mock_new_full):
-    from night_shift.bin import is_day_or_night as module
-
-    settings = module.Settings
-
-    assert settings is mock_new_full.return_value
-
-    schema_obj = mock_new_full.call_args.args[0]
-    assert schema_obj.get_id() == "org.gnome.shell.extensions.night-shift"

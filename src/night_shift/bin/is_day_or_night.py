@@ -1,11 +1,9 @@
 #!/usr/bin/python
 
-import os
 import gi
 
 from night_shift.bin.settings import Settings
 from datetime import datetime
-from pathlib import Path
 
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib
@@ -16,7 +14,6 @@ def is_day_or_night():
     settings = Settings()
 
     times: list[str] = settings.get_value("times")
-    print(f"times{times}")
 
     [sunrise, sunset] = times
     current_time = datetime.now().strftime("%H:%M")  # 24hr format
