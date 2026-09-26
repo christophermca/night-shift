@@ -82,9 +82,6 @@ class TestGetSunriseSunset:
         mock_get_sunrise_sunset.assert_not_called()
 
 
-# LEARN: A plain helper function (not a fixture) to build fake HTTP
-# responses. Use a helper when tests need *different* data. Use a fixture
-# when tests need the same setup or teardown.
 def _mock_response(payload):
     response = MagicMock()
     response.json.return_value = payload
@@ -92,9 +89,6 @@ def _mock_response(payload):
     return response
 
 
-# LEARN: A module-level constant for test data. Using a real-looking
-# response (with a timezone offset) tests the parsing properly, where a
-# neat made-up value might hide a bug.
 API_PAYLOAD = {
     "sunrise": "2026-09-25T06:52:10-04:00",
     "sunset": "2026-09-25T18:51:30-04:00",
@@ -136,10 +130,6 @@ class TestFetchSunriseSunset:
         ]
         assert len(timestamp_calls) == 1
 
-        # LEARN: Tuple unpacking on `call_args.args`, where the positional
-        # args are (key, value). Here the value is a real `GLib.Variant`
-        # (only the settings store is fake), so we can check its GVariant
-        # type string and unpack it back into Python values.
         key, variant = mock_settings.set_value.call_args.args
         assert key == "times"
         assert variant.get_type_string() == "(ss)"
@@ -149,9 +139,6 @@ class TestFetchSunriseSunset:
     def test_http_error_returns_none_and_saves_nothing(
         self, mock_get, mock_settings
     ):
-        # LEARN: Put the error where the real one would come from:
-        # `raise_for_status()` is what raises HTTPError on a 4xx/5xx. Making
-        # `requests.get` itself raise would skip that line in the code.
         response = MagicMock()
         response.raise_for_status.side_effect = requests.exceptions.HTTPError(
             "500 Server Error"
@@ -162,9 +149,6 @@ class TestFetchSunriseSunset:
         mock_settings.set_string.assert_not_called()
         mock_settings.set_value.assert_not_called()
 
-    # LEARN: `@patch` arguments come first, then fixtures (`mock_settings`,
-    # `capsys`) by name. Mixing the two is fine as long as the patch
-    # arguments go first.
     @patch("night_shift.bin.get_sunrise_sunset.requests.get")
     def test_verbose_prints_response(self, mock_get, mock_settings, capsys):
         mock_get.return_value = _mock_response(API_PAYLOAD)
@@ -179,11 +163,6 @@ class TestStaticLocation:
         "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
     )
     def test_uses_static_coords_from_settings(self, mock_fetch, mock_settings):
-        # LEARN: `side_effect` can also be a *function*, and then the mock
-        # returns whatever that function returns for the same arguments.
-        # Passing a dict's `.get` gives a lookup table: `get_string("static-latitude")`
-        # returns "51.5074", and any other key returns None. This is
-        # Mockito's `thenAnswer(...)` or Jest's `mockImplementation(key => table[key])`.
         mock_settings.get_string.side_effect = {
             "static-latitude": "51.5074",
             "static-longitude": "-0.1278",
@@ -191,8 +170,6 @@ class TestStaticLocation:
 
         GetTimeOfSunriseSunset()
 
-        # LEARN: The strings come back as floats. The test proves the
-        # conversion happens.
         mock_fetch.assert_called_once_with(51.5074, -0.1278, False)
         key, variant = mock_settings.set_value.call_args.args
         assert key == "last-known-coordinates"
@@ -213,10 +190,7 @@ class TestStaticLocation:
 
 
 class TestSave:
-    # LEARN: A small helper method on the test class. It isn't collected as
-    # a test because its name doesn't start with `test`.
     def _instance(self):
-        # No static coords in mock_settings, so __init__ makes no fetch.
         return GetTimeOfSunriseSunset()
 
     def test_dispatches_by_type(self, mock_settings):
@@ -238,9 +212,6 @@ class TestSave:
     def test_bool_uses_real_gio_method(self, mock_settings):
         instance = self._instance()
         real_api = MagicMock(spec=Gio.Settings)
-        # LEARN: Swap the dependency on this one instance. A `lambda` that
-        # returns the spec'd mock stands in for the callable `Settings`
-        # wrapper.
         instance.settings = lambda: real_api
 
         instance._save({"enabled": True})
@@ -248,11 +219,6 @@ class TestSave:
         real_api.set_boolean.assert_called_once_with("enabled", True)
 
 
-# LEARN: The tests below patch `subprocess.Popen`, and that patch hits the
-# *shared* `subprocess` module, so while one is running, `subprocess.Popen`
-# here is a mock too. Keeping a reference to the real class at import time
-# (before any test runs) keeps it available for building a `spec` later.
-# Captured before any test patches subprocess.Popen.
 REAL_POPEN = subprocess.Popen
 
 
@@ -327,18 +293,9 @@ class TestGeoclueLocation:
         mock_popen.side_effect = [MagicMock(), fake_where_am_i(["nothing\n"])]
         instance = GetTimeOfSunriseSunset()
 
-        # LEARN: `match=` is a regex searched against the exception message.
-        # It makes sure you caught the *right* TypeError, not some unrelated
-        # one.
         with pytest.raises(TypeError, match="Could not determine location"):
             instance._get_location()
 
-    # LEARN: A *regression test* built from real-world input. geoclue's
-    # where-am-i prints a trailing "°". An earlier guess was that this broke
-    # `float()`, so the test was first written as an xfail. It passed
-    # unexpectedly (a strict XPASS), which showed the regex already stops
-    # before the "°". strict xfail proved a hunch wrong, and this became a
-    # normal test that guards that behavior.
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_parses_real_where_am_i_format(
         self, mock_popen, mock_settings, fake_where_am_i
@@ -352,20 +309,6 @@ class TestGeoclueLocation:
 
         assert GetTimeOfSunriseSunset()._get_location() == (40.7128, -74.006)
 
-    # LEARN: Another bug that only a `spec` catches. The cleanup code does
-    # `if callable(self.agent): ... kill()`. A plain MagicMock IS callable,
-    # so a loose mock would sail through the kill branch and the test would
-    # pass. A real `Popen` object is NOT callable, so in production the
-    # agent is never killed.
-    #
-    # `create_autospec(cls, instance=True)` builds a mock shaped like an
-    # *instance* of the class: same methods and signatures, and not callable
-    # unless the real instance is. (`MagicMock(spec=REAL_POPEN)` isn't enough:
-    # a spec taken from a *class* is callable, because classes are.)
-    @pytest.mark.xfail(
-        strict=True,
-        reason="BUG: cleanup checks callable(self.agent); a Popen is not callable, so the agent is never killed",
-    )
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_kills_geoclue_agent(
         self, mock_popen, mock_settings, fake_where_am_i

@@ -114,7 +114,7 @@ class GetTimeOfSunriseSunset:
 
         finally:
             try:
-                if callable(self.agent):
+                if self.agent is not None:
                     while True:
                         if self.agent.poll() is None:
                             print("process still running")
