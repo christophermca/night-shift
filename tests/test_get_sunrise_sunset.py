@@ -320,10 +320,12 @@ class TestGeoclueLocation:
             fake_where_am_i(["Latitude: 1.5\n", "Longitude: 2.5\n"]),
         ]
 
-        GetTimeOfSunriseSunset()._get_location()
+        instance = GetTimeOfSunriseSunset()
+        instance._get_location()
 
-        agent.kill.assert_called_once()
-        agent.wait.assert_called_once()
+        agent.kill.assert_called_once_with()
+        agent.wait.assert_called_once_with()
+        assert instance.agent is None
 
     @pytest.mark.parametrize(
         "error, message",
