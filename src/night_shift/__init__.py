@@ -96,7 +96,9 @@ def main():
     if args.latitude is not None and args.longitude is not None:
         coords = tuple([args.latitude, args.longitude])
         sunrise_sunset = GetTimeOfSunriseSunset(args.verbose, args.override)
-        return sunrise_sunset(coords, args.verbose)
+        sunrise_sunset(coords, args.verbose)
+        if args.check_now:
+            return check()
 
     elif args.use_geoclue:
         print("should use geoclue")

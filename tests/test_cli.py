@@ -25,24 +25,25 @@ def mock_fetcher():
         yield fetcher
 
 
-def test_lat_lng_fetches_for_coords(argv, mock_fetcher):
+def test_lat_lng_fetches_and_exits_cleanly(argv, mock_fetcher):
     argv("40.7", "-74.0")
-    expected_args = (40.7, -74.0)
-    mock_fetcher.return_value.return_value = ("06:52", "18:51")
 
-    assert night_shift.main() == ("06:52", "18:51")
+    with patch("night_shift.check") as check:
+        result = night_shift.main()
 
-    mock_fetcher.return_value.assert_called_once_with(expected_args, False)
+    mock_fetcher.return_value.assert_called_once_with((40.7, -74.0), False)
+    check.assert_not_called()
+    assert result is None  # console script does sys.exit(main()): None -> 0
 
 
-def test_lat_lng_fetches_for_coords_and_checks(argv, mock_fetcher):
+def test_lat_lng_with_check_now_fetches_then_checks(argv, mock_fetcher):
     argv("40.7", "-74.0", "--check-now")
-    expected_args = (40.7, -74.0)
-    mock_fetcher.return_value.return_value = ("06:52", "18:51")
 
-    assert night_shift.main() == ("06:52", "18:51")
+    with patch("night_shift.check") as check:
+        night_shift.main()
 
-    mock_fetcher.return_value.assert_called_once_with(expected_args, False)
+    mock_fetcher.return_value.assert_called_once_with((40.7, -74.0), False)
+    check.assert_called_once_with()
 
 
 def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher):
