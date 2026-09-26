@@ -134,9 +134,6 @@ Each known bug has a strict `xfail` test. To practise the red/green loop:
 
 | Bug | Source | Test |
 |---|---|---|
-| `_get_schema_source.lookup` is missing `()` | `bin/is_day_or_night.py` | `test_settings` |
-| `systemctl enable` is outside the `for` loop | `lib/service.py` `_start_services` | `test_start_services_enables_every_timer` |
-| `systemctl disable` is outside the `for` loop | `lib/service.py` `_stop_services` | `test_stop_services_disables_every_timer` |
 | `self.units` should be `self.all_units` | `lib/service.py` `_remove_symlink` | `test_destroy_removes_symlinks` |
 | `set_bool` should be `set_boolean` | `bin/get_sunrise_sunset.py` `_save` | `test_bool_uses_real_gio_method` |
 | `callable(self.agent)` is never true for a Popen | `bin/get_sunrise_sunset.py` `_get_location` | `test_kills_geoclue_agent` |

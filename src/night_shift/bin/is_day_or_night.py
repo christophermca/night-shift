@@ -1,7 +1,5 @@
 #!/usr/bin/python
 
-import gi
-
 from night_shift.bin.settings import Settings
 from datetime import datetime
 

@@ -9,11 +9,6 @@ from unittest.mock import patch
 from night_shift.bin.settings import Settings
 
 
-# LEARN: Patch `night_shift.bin.settings.Gio`, the name as *settings.py*
-# sees it after `from gi.repository import Gio`. Patching
-# `gi.repository.Gio` would be too late, because settings.py already holds
-# its own reference to the real module. (Same "patch where it's looked up"
-# rule as in lesson 1.)
 @patch("night_shift.bin.settings.Gio")
 def test_call_returns_gio_settings(mock_gio):
     settings = Settings()
@@ -41,7 +36,9 @@ def test_looks_up_night_shift_schema(mock_gio):
     # recent call: `.args` is the tuple of positional args and `.kwargs` is
     # the dict of keyword args. This is Mockito's `ArgumentCaptor`, or
     # `mock.calls[0][0]` in Jest.
-    schema_dir = mock_gio.SettingsSchemaSource.new_from_directory.call_args.args[0]
+    schema_dir = (
+        mock_gio.SettingsSchemaSource.new_from_directory.call_args.args[0]
+    )
     assert schema_dir.endswith(
         "gnome-shell/extensions/night-shift@christophermca.github.io/schemas"
     )
