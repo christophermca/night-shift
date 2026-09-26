@@ -63,12 +63,18 @@ class TestGetSunriseSunset:
         assert object.use_geoclue is True
         assert object.override is True
 
-    def test_get_sunrise_sunset__call(self, mock_get_location, mock_settings):
-        coords = (40.7128, -74.0060)  # NYC coordinates
-        sunrise_sunset = GetTimeOfSunriseSunset(
-            verbose=False, use_geoclue=True
+    def test_get_sunrise_sunset__call(
+        self, mock_get_location, mock_get_sunrise_sunset, mock_settings
+    ):
+        mock_get_location.return_value = None  # __init__ skips its own fetch
+        sunrise_sunset = GetTimeOfSunriseSunset(use_geoclue=True)
+
+        result = sunrise_sunset((40.7128, -74.0060), True)
+
+        mock_get_sunrise_sunset.assert_called_once_with(
+            40.7128, -74.0060, True
         )
-        sunrise_sunset(coords)
+        assert result is mock_get_sunrise_sunset.return_value
 
     def test_get_sunrise_sunset_times_success(
         self, mock_get_location, mock_get_sunrise_sunset, mock_settings
@@ -82,32 +88,37 @@ class TestGetSunriseSunset:
             40.7128, -74.0060, False
         )
 
-    def test_get_location_override(
+    def test_geoclue_on_uses_geoclue_location(
         self, mock_get_location, mock_get_sunrise_sunset, mock_settings
     ):
-        GetTimeOfSunriseSunset(verbose=False, use_geoclue=True, override=True)
+        GetTimeOfSunriseSunset(use_geoclue=True)
 
-    # LEARN: A test that can never fail. Worth studying:
-    #   - `mock_get` is really the `_get_location` mock (the first positional
-    #     argument, see the class comment), not `requests.get`.
-    #   - `use_geoclue` defaults to False, so `_get_location` is never
-    #     called, and its `side_effect` never fires.
-    #   - `_get_sunrise_sunset` is mocked by the class decorator anyway, so
-    #     no HTTP code runs at all.
-    # It passes, but proves nothing about HTTP errors.
-    # `TestFetchSunriseSunset.test_http_error_returns_none_and_saves_nothing`
-    # below is the working version.
-    #
-    # Useful habit: break the code on purpose (make it raise, delete the
-    # except) and check the test goes red. If it stays green, the test isn't
-    # testing what you think.
-    def test_get_sunrise_sunset_times_http_error(
-        self, mock_get, mock_settings
+        mock_get_location.assert_called_once_with()
+        mock_settings.get_string.assert_not_called()
+
+    def test_geoclue_off_uses_static_location(
+        self, mock_get_location, mock_get_sunrise_sunset, mock_settings
     ):
-        """Test handling of HTTP errors"""
-        mock_get.side_effect = requests.exceptions.HTTPError("HTTP 500")
+        mock_settings.get_string.side_effect = {
+            "static-latitude": "51.5074",
+            "static-longitude": "-0.1278",
+        }.get
 
-        GetTimeOfSunriseSunset(verbose=False, override=True)
+        GetTimeOfSunriseSunset(use_geoclue=False)
+
+        mock_get_location.assert_not_called()
+        mock_get_sunrise_sunset.assert_called_once_with(
+            51.5074, -0.1278, False
+        )
+
+    def test_no_location_skips_fetch(
+        self, mock_get_location, mock_get_sunrise_sunset, mock_settings
+    ):
+        mock_get_location.return_value = None
+
+        GetTimeOfSunriseSunset(use_geoclue=True)
+
+        mock_get_sunrise_sunset.assert_not_called()
 
 
 # LEARN: A plain helper function (not a fixture) to build fake HTTP
@@ -402,3 +413,22 @@ class TestGeoclueLocation:
         GetTimeOfSunriseSunset()._get_location()
 
         agent.kill.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "error, message",
+        [
+            (subprocess.TimeoutExpired("where-am-i", 3), "TimeoutExpired: 3"),
+            (subprocess.CalledProcessError(1, "where-am-i"), "Error: 1"),
+        ],
+        ids=["timeout", "process-error"],
+    )
+    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    def test_geoclue_failure_returns_none(
+        self, mock_popen, error, message, mock_settings, capsys
+    ):
+        mock_popen.side_effect = [MagicMock(), error]
+        instance = GetTimeOfSunriseSunset()
+
+        assert instance._get_location() is None
+        assert message in capsys.readouterr().out
+        mock_settings.set_value.assert_not_called()
