@@ -1,6 +1,6 @@
 import pytest
-from unittest.mock import patch
 import night_shift
+from unittest.mock import patch
 
 
 @pytest.fixture
@@ -25,6 +25,16 @@ def test_lat_lng_fetches_for_coords(argv, mock_fetcher):
     assert night_shift.main() == ("06:52", "18:51")
 
     mock_fetcher.return_value.assert_called_once_with(expected_args, False)
+
+
+def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher):
+    argv("abc", "-74.0")
+
+    with pytest.raises(SystemExit) as exc:
+        night_shift.main()
+
+    assert exc.value.code == 2
+    mock_fetcher.assert_not_called()
 
 
 def test_check_now_runs_check(argv):
@@ -87,6 +97,12 @@ def test_no_args_prints_help(argv, mock_fetcher, capsys):
     # LEARN: Asserting that something did NOT happen matters just as much.
     # Here it proves "no args" doesn't quietly start a network fetch.
     mock_fetcher.assert_not_called()
+
+
+def test_check_runs_is_day_or_night():
+    with patch("night_shift.is_day_or_night") as is_day_or_night:
+        night_shift.check()
+        is_day_or_night.assert_called_once()
 
 
 def test_run_once_checks_when_asked(mock_fetcher):

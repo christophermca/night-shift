@@ -115,15 +115,9 @@ class GetTimeOfSunriseSunset:
         finally:
             try:
                 if self.agent is not None:
-                    while True:
-                        if self.agent.poll() is None:
-                            print("process still running")
-                            time.sleep(1)
-
-                        print("Terminating geoclue agent")
-                        self.agent.kill()  # Gracefully exits
-                        self.agent.wait()  # Prevents zombie processes
-                        break
+                    self.agent.kill()  # Gracefully exits
+                    self.agent.wait()  # Prevents zombie processes
+                    self.agent = None
 
             except Exception as e:
                 print(f"Error: {e}")
