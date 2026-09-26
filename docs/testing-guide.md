@@ -134,8 +134,6 @@ Each known bug has a strict `xfail` test. To practise the red/green loop:
 
 | Bug | Source | Test |
 |---|---|---|
-| `set_bool` should be `set_boolean` | `bin/get_sunrise_sunset.py` `_save` | `test_bool_uses_real_gio_method` |
-| `callable(self.agent)` is never true for a Popen | `bin/get_sunrise_sunset.py` `_get_location` | `test_kills_geoclue_agent` |
 
 More exercises:
 

@@ -92,7 +92,7 @@ def main():
             return Services().destroy()
 
     if args.latitude is not None and args.longitude is not None:
-        coords = tuple([args.latitude, args.longitude])
+        coords = tuple([float(args.latitude), float(args.longitude)])
         sunrise_sunset = GetTimeOfSunriseSunset(args.verbose, args.override)
         return sunrise_sunset(coords, args.verbose)
 
