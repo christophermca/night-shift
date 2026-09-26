@@ -333,35 +333,6 @@ class TestGeoclueLocation:
         with pytest.raises(TypeError, match="Could not determine location"):
             instance._get_location()
 
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
-    def test_override_saves_last_known_coordinates(
-        self, mock_popen, mock_settings, fake_where_am_i
-    ):
-        mock_popen.side_effect = [
-            MagicMock(),
-            fake_where_am_i(["Latitude: 1.5\n", "Longitude: 2.5\n"]),
-        ]
-        instance = GetTimeOfSunriseSunset(override=True)
-
-        instance._get_location()
-
-        key, variant = mock_settings.set_value.call_args.args
-        assert key == "last-known-coordinates"
-        assert variant.unpack() == (1.5, 2.5)
-
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
-    def test_no_location_raises(
-        self, mock_popen, mock_settings, fake_where_am_i
-    ):
-        mock_popen.side_effect = [MagicMock(), fake_where_am_i(["nothing\n"])]
-        instance = GetTimeOfSunriseSunset()
-
-        # LEARN: `match=` is a regex searched against the exception message.
-        # It makes sure you caught the *right* TypeError, not some unrelated
-        # one.
-        with pytest.raises(TypeError, match="Could not determine location"):
-            instance._get_location()
-
     # LEARN: A *regression test* built from real-world input. geoclue's
     # where-am-i prints a trailing "°". An earlier guess was that this broke
     # `float()`, so the test was first written as an xfail. It passed
