@@ -6,8 +6,9 @@ import sys
 import argparse
 
 
-def check():
-    is_day_or_night()
+def check(times=None):
+    # Returns None on purpose: the console script does sys.exit(main()).
+    is_day_or_night(times)
 
 
 def run_once(
@@ -17,10 +18,10 @@ def run_once(
     use_geoclue: bool = False,
 ):
     try:
-        GetTimeOfSunriseSunset(verbose, override, use_geoclue)
+        sunrise_sunset = GetTimeOfSunriseSunset(verbose, override, use_geoclue)
         if check_now == True:
             try:
-                check()
+                check(sunrise_sunset.times)
             except Exception as e:
                 print(f"check failed: {e}")
 
@@ -96,9 +97,9 @@ def main():
     if args.latitude is not None and args.longitude is not None:
         coords = tuple([args.latitude, args.longitude])
         sunrise_sunset = GetTimeOfSunriseSunset(args.verbose, args.override)
-        sunrise_sunset(coords, args.verbose)
+        times = sunrise_sunset(coords, args.verbose)
         if args.check_now:
-            return check()
+            return check(times)
 
     elif args.use_geoclue:
         print("should use geoclue")

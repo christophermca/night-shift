@@ -36,14 +36,15 @@ def test_lat_lng_fetches_and_exits_cleanly(argv, mock_fetcher):
     assert result is None  # console script does sys.exit(main()): None -> 0
 
 
-def test_lat_lng_with_check_now_fetches_then_checks(argv, mock_fetcher):
+def test_lat_lng_with_check_now_checks_the_fetched_times(argv, mock_fetcher):
     argv("40.7", "-74.0", "--check-now")
+    mock_fetcher.return_value.return_value = ("06:52", "18:51")
 
     with patch("night_shift.check") as check:
         night_shift.main()
 
     mock_fetcher.return_value.assert_called_once_with((40.7, -74.0), False)
-    check.assert_called_once_with()
+    check.assert_called_once_with(("06:52", "18:51"))
 
 
 def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher):
@@ -118,17 +119,28 @@ def test_no_args_prints_help(argv, mock_fetcher, capsys):
     mock_fetcher.assert_not_called()
 
 
-def test_check_runs_is_day_or_night():
+def test_check_without_times_uses_saved_times():
     with patch("night_shift.is_day_or_night") as is_day_or_night:
         night_shift.check()
-        is_day_or_night.assert_called_once()
+
+    is_day_or_night.assert_called_once_with(None)
 
 
-def test_run_once_checks_when_asked(mock_fetcher):
+def test_check_passes_times_through_and_returns_none():
+    with patch("night_shift.is_day_or_night", return_value="day") as fn:
+        result = night_shift.check(("06:52", "18:51"))
+
+    fn.assert_called_once_with(("06:52", "18:51"))
+    assert result is None  # a string here would become exit status 1
+
+
+def test_run_once_checks_the_fetched_times(mock_fetcher):
+    mock_fetcher.return_value.times = ("06:52", "18:51")
+
     with patch("night_shift.check") as check:
         night_shift.run_once(check_now=True)
 
-    check.assert_called_once_with()
+    check.assert_called_once_with(("06:52", "18:51"))
 
 
 def test_run_once_catches_fetch_errors(mock_fetcher, capsys):

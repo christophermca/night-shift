@@ -29,6 +29,7 @@ class GetTimeOfSunriseSunset:
         self.use_geoclue = use_geoclue
         self.settings = Settings()
         self.agent = None
+        self.times: tuple[str, str] | None = None
 
         coords: tuple[float, float] | None
 
@@ -42,7 +43,7 @@ class GetTimeOfSunriseSunset:
 
         if coords:
             print(f"coords: {coords}")
-            self._get_sunrise_sunset(*coords, self.verbose)
+            self.times = self._get_sunrise_sunset(*coords, self.verbose)
 
     def __call__(self, coords, verbose=False):
         return self._get_sunrise_sunset(*coords, verbose)

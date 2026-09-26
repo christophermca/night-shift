@@ -97,3 +97,37 @@ def test_no_settings_prints_instead_of_crashing(mock_settings_class, capsys):
     assert is_day_or_night() is None
 
     assert "unable to check day or night" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "now, expected", [("05:59", "night"), ("12:00", "day"), ("18:30", "night")]
+)
+@patch("night_shift.bin.is_day_or_night.Settings")
+def test_given_times_are_used_instead_of_saved_ones(
+    mock_settings_class, mock_settings, now, expected
+):
+    mock_settings_class.return_value.return_value = mock_settings
+
+    with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
+        mock_datetime.now.return_value.strftime.return_value = now
+
+        result = is_day_or_night(("06:00", "18:30"))
+
+    mock_settings.get_value.assert_not_called()
+    mock_settings.set_string.assert_called_once_with("day-or-night", expected)
+    assert result == expected
+
+
+@patch("night_shift.bin.is_day_or_night.Settings")
+def test_given_times_work_without_settings(mock_settings_class, capsys):
+    mock_settings_class.return_value.return_value = None
+
+    with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
+        mock_datetime.now.return_value.strftime.return_value = "12:00"
+
+        result = is_day_or_night(("06:00", "18:30"))
+
+    assert result == "day"
+    captured = capsys.readouterr()
+    assert "daytime" in captured.out
+    assert "unable to save day-or-night" in captured.err

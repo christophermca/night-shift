@@ -410,3 +410,19 @@ def test_static_location_read_from_real_shaped_settings(
     GetTimeOfSunriseSunset()
 
     mock_fetch.assert_called_once_with(51.5074, -0.1278, False)
+
+
+@patch("night_shift.bin.get_sunrise_sunset.requests.get")
+def test_init_keeps_the_fetched_times(mock_get, mock_settings):
+    mock_settings.get_string.side_effect = {
+        "static-latitude": "51.5074",
+        "static-longitude": "-0.1278",
+    }.get
+    mock_get.return_value = _mock_response(API_PAYLOAD)
+
+    assert GetTimeOfSunriseSunset().times == ("06:52", "18:51")
+
+
+def test_init_without_location_has_no_times(mock_settings):
+    # mock_settings has no static location, so nothing is fetched
+    assert GetTimeOfSunriseSunset().times is None
