@@ -53,10 +53,10 @@ class Services:
             for timer in self.timers:
                 print(f"unit-name: {timer.name}")
 
-            subprocess.run(
-                ["systemctl", "--user", "enable", "--now", timer.name],
-                check=True,
-            )
+                subprocess.run(
+                    ["systemctl", "--user", "enable", "--now", timer.name],
+                    check=True,
+                )
 
         except subprocess.CalledProcessError as e:
             print(f"Error: {e}")
@@ -70,10 +70,10 @@ class Services:
             for timer in self.timers:
                 print(f"unit-name: {timer.name}")
 
-            subprocess.run(
-                ["systemctl", "--user", "disable", "--now", timer.name],
-                check=True,
-            )
+                subprocess.run(
+                    ["systemctl", "--user", "disable", "--now", timer.name],
+                    check=True,
+                )
 
         except subprocess.CalledProcessError as e:
             print(f"Error: {e}")
