@@ -25,6 +25,13 @@ def mock_fetcher():
         yield fetcher
 
 
+@pytest.fixture(autouse=True)
+def settings_class():
+    """main() builds one Settings per run; fake it so no test touches GSettings."""
+    with patch("night_shift.Settings") as settings_class:
+        yield settings_class
+
+
 def test_lat_lng_fetches_and_exits_cleanly(argv, mock_fetcher):
     argv("40.7", "-74.0")
 
@@ -36,15 +43,20 @@ def test_lat_lng_fetches_and_exits_cleanly(argv, mock_fetcher):
     assert result is None  # console script does sys.exit(main()): None -> 0
 
 
-def test_lat_lng_with_check_now_checks_the_fetched_times(argv, mock_fetcher):
+def test_lat_lng_with_check_now_checks_the_fetched_times(
+    argv, mock_fetcher, settings_class
+):
     argv("40.7", "-74.0", "--check-now")
     mock_fetcher.return_value.return_value = ("06:52", "18:51")
 
     with patch("night_shift.check") as check:
         night_shift.main()
 
+    settings = settings_class.return_value
+    settings_class.assert_called_once_with()  # one Settings for the whole run
+    mock_fetcher.assert_called_once_with(False, False, settings=settings)
     mock_fetcher.return_value.assert_called_once_with((40.7, -74.0), False)
-    check.assert_called_once_with(("06:52", "18:51"))
+    check.assert_called_once_with(("06:52", "18:51"), settings)
 
 
 def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher):
@@ -57,28 +69,34 @@ def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher):
     mock_fetcher.assert_not_called()
 
 
-def test_check_now_runs_check(argv):
+def test_check_now_runs_check(argv, settings_class):
     argv("--check-now")
 
     with patch("night_shift.check") as check:
         night_shift.main()
 
+    settings_class.assert_called_once_with()
+
     # LEARN: `assert_called_once_with()` with no arguments means "called
     # once, with no arguments". That's stricter than `assert_called_once()`,
     # which ignores the arguments.
-    check.assert_called_once_with()
+    check.assert_called_once_with(settings=settings_class.return_value)
 
 
-def test_geoclue_runs_once_with_geoclue(argv, mock_fetcher):
+def test_geoclue_runs_once_with_geoclue(argv, mock_fetcher, settings_class):
     argv("-g", "-v", "-f")
 
     night_shift.main()
+
+    settings_class.assert_called_once_with()
 
     # LEARN: The positional args are (verbose, override, use_geoclue). That
     # makes a bare `(True, True, True)` hard to read, and it can't catch
     # two arguments being swapped. Code that uses keyword args tends to be
     # easier to test.
-    mock_fetcher.assert_called_once_with(True, True, True)
+    mock_fetcher.assert_called_once_with(
+        True, True, True, settings=settings_class.return_value
+    )
 
 
 # LEARN: `@pytest.mark.parametrize` runs one test body with several inputs,
@@ -123,15 +141,24 @@ def test_check_without_times_uses_saved_times():
     with patch("night_shift.is_day_or_night") as is_day_or_night:
         night_shift.check()
 
-    is_day_or_night.assert_called_once_with(None)
+    is_day_or_night.assert_called_once_with(None, None)
 
 
 def test_check_passes_times_through_and_returns_none():
     with patch("night_shift.is_day_or_night", return_value="day") as fn:
         result = night_shift.check(("06:52", "18:51"))
 
-    fn.assert_called_once_with(("06:52", "18:51"))
+    fn.assert_called_once_with(("06:52", "18:51"), None)
     assert result is None  # a string here would become exit status 1
+
+
+def test_check_passes_settings_through():
+    settings = object()
+
+    with patch("night_shift.is_day_or_night") as fn:
+        night_shift.check(("06:52", "18:51"), settings)
+
+    fn.assert_called_once_with(("06:52", "18:51"), settings)
 
 
 def test_run_once_checks_the_fetched_times(mock_fetcher):
@@ -140,7 +167,32 @@ def test_run_once_checks_the_fetched_times(mock_fetcher):
     with patch("night_shift.check") as check:
         night_shift.run_once(check_now=True)
 
-    check.assert_called_once_with(("06:52", "18:51"))
+    check.assert_called_once_with(("06:52", "18:51"), None)
+
+
+def test_run_once_shares_settings_with_fetch_and_check(mock_fetcher):
+    settings = object()
+    mock_fetcher.return_value.times = ("06:52", "18:51")
+
+    with patch("night_shift.check") as check:
+        night_shift.run_once(check_now=True, settings=settings)
+
+    assert mock_fetcher.call_args.kwargs["settings"] is settings
+    check.assert_called_once_with(("06:52", "18:51"), settings)
+
+
+@pytest.mark.parametrize(
+    "args", [(), ("--install-systemd-units",)], ids=["help", "install-units"]
+)
+def test_paths_without_settings_dont_create_them(
+    argv, mock_fetcher, settings_class, args
+):
+    argv(*args)
+
+    with patch("night_shift.Services"):
+        night_shift.main()
+
+    settings_class.assert_not_called()  # no spurious "settings unavailable"
 
 
 def test_run_once_catches_fetch_errors(mock_fetcher, capsys):

@@ -1,14 +1,15 @@
 #!/usr/bin/python
 from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 from night_shift.bin.is_day_or_night import is_day_or_night
+from night_shift.bin.settings import Settings
 from night_shift.lib.service import Services
 import sys
 import argparse
 
 
-def check(times=None):
+def check(times=None, settings=None):
     # Returns None on purpose: the console script does sys.exit(main()).
-    is_day_or_night(times)
+    is_day_or_night(times, settings)
 
 
 def run_once(
@@ -16,12 +17,15 @@ def run_once(
     override: bool = False,
     check_now: bool = False,
     use_geoclue: bool = False,
+    settings=None,
 ):
     try:
-        sunrise_sunset = GetTimeOfSunriseSunset(verbose, override, use_geoclue)
+        sunrise_sunset = GetTimeOfSunriseSunset(
+            verbose, override, use_geoclue, settings=settings
+        )
         if check_now == True:
             try:
-                check(sunrise_sunset.times)
+                check(sunrise_sunset.times, settings)
             except Exception as e:
                 print(f"check failed: {e}")
 
@@ -95,20 +99,29 @@ def main():
             return Services().destroy()
 
     if args.latitude is not None and args.longitude is not None:
+        # One Settings per run, shared by everything below, so a missing
+        # schema is reported once. Only created on paths that need it.
+        settings = Settings()
         coords = tuple([args.latitude, args.longitude])
-        sunrise_sunset = GetTimeOfSunriseSunset(args.verbose, args.override)
+        sunrise_sunset = GetTimeOfSunriseSunset(
+            args.verbose, args.override, settings=settings
+        )
         times = sunrise_sunset(coords, args.verbose)
         if args.check_now:
-            return check(times)
+            return check(times, settings)
 
     elif args.use_geoclue:
         print("should use geoclue")
         return run_once(
-            args.verbose, args.override, args.check_now, args.use_geoclue
+            args.verbose,
+            args.override,
+            args.check_now,
+            args.use_geoclue,
+            settings=Settings(),
         )
 
     elif args.check_now:
-        return check()
+        return check(settings=Settings())
 
     else:
         parser.print_help()

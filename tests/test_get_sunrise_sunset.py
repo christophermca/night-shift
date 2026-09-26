@@ -426,3 +426,12 @@ def test_init_keeps_the_fetched_times(mock_get, mock_settings):
 def test_init_without_location_has_no_times(mock_settings):
     # mock_settings has no static location, so nothing is fetched
     assert GetTimeOfSunriseSunset().times is None
+
+
+def test_uses_the_settings_it_is_given(_patch_settings, mock_settings):
+    shared = MagicMock(return_value=mock_settings)
+
+    instance = GetTimeOfSunriseSunset(settings=shared)
+
+    assert instance.settings is shared
+    _patch_settings.assert_not_called()  # didn't build a second one

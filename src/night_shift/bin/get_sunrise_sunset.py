@@ -23,11 +23,12 @@ class GetTimeOfSunriseSunset:
         verbose: bool = False,
         override: bool = False,
         use_geoclue: bool = False,
+        settings: Settings | None = None,
     ):
         self.override = override
         self.verbose = verbose
         self.use_geoclue = use_geoclue
-        self.settings = Settings()
+        self.settings = settings if settings is not None else Settings()
         self.agent = None
         self.times: tuple[str, str] | None = None
 

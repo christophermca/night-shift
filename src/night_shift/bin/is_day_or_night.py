@@ -6,14 +6,15 @@ from night_shift.bin.settings import Settings
 from datetime import datetime
 
 
-def is_day_or_night(times=None):
+def is_day_or_night(times=None, settings=None):
     """Work out "day" or "night" and save it.
 
     `times` is a (sunrise, sunset) pair of "HH:MM" strings. When it's not
-    given, the times saved in settings are used.
+    given, the times saved in settings are used. `settings` is a `Settings`
+    to share with the caller; a new one is created when it's not given.
     """
     print("is_day_or_night")
-    settings = Settings()()
+    settings = (settings if settings is not None else Settings())()
 
     if times is None:
         if settings is None:
