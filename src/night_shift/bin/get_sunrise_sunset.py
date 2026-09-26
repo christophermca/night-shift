@@ -96,7 +96,8 @@ class GetTimeOfSunriseSunset:
                     "last-known-coordinates"
                 )
 
-                if self.override or (coords != previous_coordinates.unpack()):
+                print(previous_coordinates)
+                if self.override or (coords != previous_coordinates):
                     last_known_coordinates = GLib.Variant("(dd)", coords)
                     data: dict = {
                         "last-known-coordinates": last_known_coordinates,

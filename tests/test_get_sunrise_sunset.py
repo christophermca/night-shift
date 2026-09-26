@@ -269,14 +269,69 @@ class TestGeoclueLocation:
                 "Accuracy:    50.000000 meters\n",
             ]
         )
-        # LEARN: The code calls `Popen` twice, first for the agent and then
-        # for where-am-i. A list `side_effect` hands back a different fake
-        # process for each call, in order.
         mock_popen.side_effect = [agent, where_am_i]
         instance = GetTimeOfSunriseSunset()
 
         assert instance._get_location() == (40.7128, -74.006)
         where_am_i.terminate.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "saved, override, should_save",
+        [
+            ((1.5, 2.5), False, False),
+            ((9.0, 9.0), False, True),
+            ((1.5, 2.5), True, True),
+        ],
+        ids=["unchanged", "moved", "override"],
+    )
+    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    def test_saves_coordinates_only_when_needed(
+        self,
+        mock_popen,
+        saved,
+        override,
+        should_save,
+        mock_settings,
+        fake_where_am_i,
+    ):
+        mock_settings.get_value.return_value = GLib.Variant("(dd)", saved)
+        mock_popen.side_effect = [
+            MagicMock(),
+            fake_where_am_i(["Latitude: 1.5\n", "Longitude: 2.5\n"]),
+        ]
+
+        GetTimeOfSunriseSunset(override=override)._get_location()
+
+        assert mock_settings.set_value.called is should_save
+
+    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    def test_override_saves_last_known_coordinates(
+        self, mock_popen, mock_settings, fake_where_am_i
+    ):
+        mock_popen.side_effect = [
+            MagicMock(),
+            fake_where_am_i(["Latitude: 1.5\n", "Longitude: 2.5\n"]),
+        ]
+        instance = GetTimeOfSunriseSunset(override=True)
+
+        instance._get_location()
+
+        key, variant = mock_settings.set_value.call_args.args
+        assert key == "last-known-coordinates"
+        assert variant.unpack() == (1.5, 2.5)
+
+    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    def test_no_location_raises(
+        self, mock_popen, mock_settings, fake_where_am_i
+    ):
+        mock_popen.side_effect = [MagicMock(), fake_where_am_i(["nothing\n"])]
+        instance = GetTimeOfSunriseSunset()
+
+        # LEARN: `match=` is a regex searched against the exception message.
+        # It makes sure you caught the *right* TypeError, not some unrelated
+        # one.
+        with pytest.raises(TypeError, match="Could not determine location"):
+            instance._get_location()
 
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_override_saves_last_known_coordinates(

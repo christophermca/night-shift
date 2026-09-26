@@ -23,6 +23,16 @@ def _patch_settings(mock_settings):
 
 
 @pytest.fixture
+def fake_where_am_i():
+    def make(lines):
+        proc = MagicMock()
+        proc.stdout.readline.side_effect = [*lines, ""]
+        return proc
+
+    return make
+
+
+@pytest.fixture
 def mock_settings():
     """Mock Gio.Settings object"""
     settings = MagicMock()
