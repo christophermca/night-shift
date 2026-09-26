@@ -5,7 +5,6 @@ import gi
 import json
 import argparse
 import requests
-import time
 import subprocess
 from typing import Any
 from night_shift.bin.settings import Settings
