@@ -345,3 +345,68 @@ class TestGeoclueLocation:
         assert instance._get_location() is None
         assert message in capsys.readouterr().out
         mock_settings.set_value.assert_not_called()
+
+
+@pytest.fixture
+def no_settings(_patch_settings):
+    """Simulate a machine without the GNOME schema: Settings()() is None."""
+    _patch_settings.return_value.return_value = None
+
+
+class TestWithoutSettings:
+    @patch("night_shift.bin.get_sunrise_sunset.requests.get")
+    def test_fetch_still_returns_times(self, mock_get, no_settings, capsys):
+        mock_get.return_value = _mock_response(API_PAYLOAD)
+
+        times = GetTimeOfSunriseSunset()((40.7128, -74.0060))
+
+        assert times == ("06:52", "18:51")
+        assert (
+            "unable to save timestamp, tzid, times: settings unavailable"
+            in capsys.readouterr().err
+        )
+
+    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    def test_geoclue_still_returns_coords(
+        self, mock_popen, no_settings, fake_where_am_i, capsys
+    ):
+        mock_popen.side_effect = [
+            MagicMock(),
+            fake_where_am_i(["Latitude: 1.5\n", "Longitude: 2.5\n"]),
+        ]
+
+        assert GetTimeOfSunriseSunset()._get_location() == (1.5, 2.5)
+        assert (
+            "unable to save last-known-coordinates" in capsys.readouterr().err
+        )
+
+    @patch(
+        "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
+    )
+    def test_no_static_location_skips_fetch(
+        self, mock_fetch, no_settings, capsys
+    ):
+        GetTimeOfSunriseSunset()
+
+        mock_fetch.assert_not_called()
+        assert "no static location" in capsys.readouterr().err
+
+
+@patch(
+    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
+)
+def test_static_location_read_from_real_shaped_settings(
+    mock_fetch, _patch_settings
+):
+    # A real Gio.Settings is not callable; a plain MagicMock is. Autospec
+    # keeps the real shape so a `callable(settings)` check can't sneak back.
+    settings = create_autospec(Gio.Settings, instance=True)
+    settings.get_string.side_effect = {
+        "static-latitude": "51.5074",
+        "static-longitude": "-0.1278",
+    }.get
+    _patch_settings.return_value.return_value = settings
+
+    GetTimeOfSunriseSunset()
+
+    mock_fetch.assert_called_once_with(51.5074, -0.1278, False)

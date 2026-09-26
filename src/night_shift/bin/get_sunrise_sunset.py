@@ -6,6 +6,7 @@ import json
 import argparse
 import requests
 import subprocess
+import sys
 from typing import Any
 from night_shift.bin.settings import Settings
 from datetime import datetime
@@ -90,17 +91,19 @@ class GetTimeOfSunriseSunset:
                 )
             coords = tuple(arr)
 
-            if callable(self.settings().get_value):
-                previous_coordinates = self.settings().get_value(
+            settings = self.settings()
+            previous_coordinates = None
+            if settings is not None:
+                previous_coordinates = settings.get_value(
                     "last-known-coordinates"
-                )
+                ).unpack()
 
-                if self.override or (coords != previous_coordinates.unpack()):
-                    last_known_coordinates = GLib.Variant("(dd)", coords)
-                    data: dict = {
-                        "last-known-coordinates": last_known_coordinates,
-                    }
-                    self._save(data)
+            if self.override or (coords != previous_coordinates):
+                last_known_coordinates = GLib.Variant("(dd)", coords)
+                data: dict = {
+                    "last-known-coordinates": last_known_coordinates,
+                }
+                self._save(data)
             return coords
 
         except subprocess.TimeoutExpired as e:
@@ -170,18 +173,26 @@ class GetTimeOfSunriseSunset:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
 
     def _save(self, data) -> None:
+        settings = self.settings()
+        if settings is None:
+            print(
+                f"night-shift: unable to save {', '.join(data)}: settings unavailable",
+                file=sys.stderr,
+            )
+            return
+
         try:
             for key, value in data.items():
 
                 match value:
                     case str():
-                        self.settings().set_string(key, value)
+                        settings.set_string(key, value)
                     case bool():
-                        self.settings().set_boolean(key, value)
+                        settings.set_boolean(key, value)
                     case int():
-                        self.settings().set_int(key, value)
+                        settings.set_int(key, value)
                     case _:
-                        self.settings().set_value(key, value)
+                        settings.set_value(key, value)
 
             if self.verbose:
                 print(f"{data}")
@@ -192,19 +203,24 @@ class GetTimeOfSunriseSunset:
 
     def _get_static_location_from_settings(self) -> tuple[float, float]:
 
-        if callable(self.settings()):
-            lat = self.settings().get_string("static-latitude")
-            lng = self.settings().get_string("static-longitude")
+        settings = self.settings()
+        if settings is None:
+            print(
+                "night-shift: no static location: settings unavailable",
+                file=sys.stderr,
+            )
+            return None
 
-            if lat and lng:
-                static_location = (float(lat), float(lng))
+        lat = settings.get_string("static-latitude")
+        lng = settings.get_string("static-longitude")
 
-                last_known_coordinates = GLib.Variant("(dd)", static_location)
-                self.settings().set_value(
-                    "last-known-coordinates", last_known_coordinates
-                )
+        if lat and lng:
+            static_location = (float(lat), float(lng))
 
-                return static_location
+            last_known_coordinates = GLib.Variant("(dd)", static_location)
+            self._save({"last-known-coordinates": last_known_coordinates})
 
-            else:
-                print("Missing required keys")
+            return static_location
+
+        else:
+            print("Missing required keys")

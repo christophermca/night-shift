@@ -44,22 +44,38 @@ def test_looks_up_night_shift_schema(mock_gio):
     )
 
 
-# LEARN: `capsys` is a built-in pytest fixture that captures everything
-# printed to stdout/stderr during the test. Name it as a parameter and it's
-# yours, with no import needed. See test_cli.py for more on fixtures.
+def test_missing_schema_means_no_settings(tmp_path, monkeypatch, capsys):
+    # Real Gio, nothing mocked: an empty HOME is exactly a machine without
+    # the GNOME extension installed.
+    monkeypatch.setenv("HOME", str(tmp_path))
+
+    settings = Settings()
+
+    assert settings() is None
+    assert settings.available is False
+    assert "settings unavailable" in capsys.readouterr().err
+
+
 @patch("night_shift.bin.settings.Gio")
-def test_lookup_error_is_caught(mock_gio, capsys):
+def test_schema_not_in_directory_means_no_settings(mock_gio, capsys):
     source = mock_gio.SettingsSchemaSource.new_from_directory.return_value
-    # LEARN: `side_effect` set to an exception makes the mock *raise* when
-    # called. This is Mockito's `thenThrow(...)`, or Jest's
-    # `mockImplementation(() => { throw ... })`. It's how you test error
-    # paths without breaking anything real.
+    source.lookup.return_value = None  # directory exists, schema isn't in it
+
+    settings = Settings()
+
+    assert settings() is None
+    mock_gio.Settings.new_full.assert_not_called()
+    assert "org.gnome.shell.extensions.night-shift not found" in (
+        capsys.readouterr().err
+    )
+
+
+@patch("night_shift.bin.settings.Gio")
+def test_lookup_error_means_no_settings(mock_gio, capsys):
+    source = mock_gio.SettingsSchemaSource.new_from_directory.return_value
     source.lookup.side_effect = RuntimeError("schema missing")
 
     settings = Settings()
 
-    # LEARN: Test what the code *actually* does, even when it's odd. On
-    # error `__init__` prints and never sets `self.settings`. Pinning that
-    # down means you'll notice if it changes, whether you meant it to or not.
-    assert not hasattr(settings, "settings")
-    assert "Error schema missing" in capsys.readouterr().out
+    assert settings() is None
+    assert "schema missing" in capsys.readouterr().err

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import sys
+
 from night_shift.bin.settings import Settings
 from datetime import datetime
 
@@ -7,6 +9,13 @@ from datetime import datetime
 def is_day_or_night():
     print("is_day_or_night")
     settings = Settings()()
+
+    if settings is None:
+        print(
+            "night-shift: unable to check day or night: no saved sunrise/sunset times",
+            file=sys.stderr,
+        )
+        return None
 
     times: list[str] = settings.get_value("times")
 

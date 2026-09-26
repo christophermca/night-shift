@@ -88,3 +88,12 @@ def test_is_day_or_night_during_night(mock_settings_func, mock_settings):
         is_day_or_night()
 
         mock_settings.set_string.assert_called_with("day-or-night", "night")
+
+
+@patch("night_shift.bin.is_day_or_night.Settings")
+def test_no_settings_prints_instead_of_crashing(mock_settings_class, capsys):
+    mock_settings_class.return_value.return_value = None
+
+    assert is_day_or_night() is None
+
+    assert "unable to check day or night" in capsys.readouterr().err
