@@ -141,10 +141,6 @@ def test_setup_links_then_reloads_daemon(dirs, mock_run):
 # than inside it, so only the last timer is enabled. The test says what
 # SHOULD happen: every timer gets enabled. (xfail is explained in
 # test_is_day_or_night.py.)
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: `systemctl enable` is outside the for loop, so only the last timer is enabled",
-)
 def test_start_services_enables_every_timer(dirs, mock_run):
     Services()._start_services()
 
@@ -157,10 +153,6 @@ def test_start_services_enables_every_timer(dirs, mock_run):
         )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: `systemctl disable` is outside the for loop, so only the last timer is disabled",
-)
 def test_stop_services_disables_every_timer(dirs, mock_run):
     Services()._stop_services()
 
