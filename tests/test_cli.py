@@ -1,25 +1,8 @@
-# LEARN: Lesson 3, fixtures in depth, parametrize, and testing a CLI.
-#
-# `night_shift.main()` is a router: it parses argv and calls the right
-# function. Unit-testing a router means checking "flag X calls Y". We don't
-# need Y to actually do anything, so Y is mocked every time.
 import pytest
 from unittest.mock import patch
 import night_shift
 
 
-# LEARN: A fixture can ask for *other* fixtures just by naming them as
-# parameters. pytest works out the dependency graph and injects them, the
-# way Spring or Dagger inject constructor arguments in Java.
-#
-# `monkeypatch` is a built-in fixture for temporarily changing things
-# (attributes, dict entries, env vars) that are undone automatically when
-# the test ends. Here it swaps `sys.argv`, so `argparse` sees whatever
-# command line we like.
-#
-# This is a *factory fixture*: rather than returning a value it returns a
-# function, so each test can pick its own arguments:
-#     argv("--check-now")  ->  sys.argv = ["night-shift", "--check-now"]
 @pytest.fixture
 def argv(monkeypatch):
     def set_args(*args):
@@ -28,15 +11,6 @@ def argv(monkeypatch):
     return set_args
 
 
-# LEARN: A `yield` fixture handles setup AND teardown in one function:
-#     code before `yield` -> beforeEach / @BeforeEach
-#     the yielded value   -> what the test receives
-#     code after `yield`  -> afterEach / @AfterEach (runs even if the test fails)
-# Here the teardown is hidden in the `with` block: when the fixture resumes
-# after `yield`, the `with` exits and the patch is undone.
-#
-# Note the target: `night_shift.GetTimeOfSunriseSunset`, the name as
-# `night_shift/__init__.py` imported it, not the class's home module.
 @pytest.fixture
 def mock_fetcher():
     with patch("night_shift.GetTimeOfSunriseSunset") as fetcher:
@@ -44,21 +18,13 @@ def mock_fetcher():
 
 
 def test_lat_lng_fetches_for_coords(argv, mock_fetcher):
-    # LEARN: The blank lines split every test into Arrange / Act / Assert
-    # (also called Given / When / Then). One act per test keeps failures easy
-    # to read.
     argv("40.7", "-74.0")
-    # LEARN: `mock_fetcher` stands in for the *class*. Calling it
-    # (`GetTimeOfSunriseSunset(...)`) gives `mock_fetcher.return_value`, the
-    # fake *instance*. `main()` then calls that instance, which gives
-    # `.return_value.return_value`. Read it as: class() -> instance() -> result.
+    expected_args = (40.7, -74.0)
     mock_fetcher.return_value.return_value = ("06:52", "18:51")
 
     assert night_shift.main() == ("06:52", "18:51")
-    # LEARN: argparse hands over strings, not floats, and this test records
-    # that. Whether it's *desired* behavior is a separate question. Tests
-    # often surface questions like this.
-    mock_fetcher.return_value.assert_called_once_with(("40.7", "-74.0"), False)
+
+    mock_fetcher.return_value.assert_called_once_with(expected_args, False)
 
 
 def test_check_now_runs_check(argv):
