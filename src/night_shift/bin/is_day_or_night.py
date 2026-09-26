@@ -5,13 +5,10 @@ import gi
 from night_shift.bin.settings import Settings
 from datetime import datetime
 
-gi.require_version("Gio", "2.0")
-from gi.repository import Gio, GLib
-
 
 def is_day_or_night():
     print("is_day_or_night")
-    settings = Settings()
+    settings = Settings()()
 
     times: list[str] = settings.get_value("times")
 
