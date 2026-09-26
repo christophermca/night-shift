@@ -5,14 +5,15 @@ from unittest.mock import Mock, patch, MagicMock
 from night_shift.bin.is_day_or_night import is_day_or_night
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_settings():
+    """Mock Gio.Settings object"""
     settings = MagicMock()
     settings.get_value.return_value = ["06:00", "18:30"]  # sunrise, sunset
     return settings
 
 
-@patch("night_shift.bin.is_day_or_night._settings")
+@patch("night_shift.bin.is_day_or_night.Settings")
 def test_is_day_or_night_during_day(mock_settings_func, mock_settings):
     """Test detection of daytime"""
     mock_settings_func.return_value = mock_settings
@@ -25,9 +26,9 @@ def test_is_day_or_night_during_day(mock_settings_func, mock_settings):
         mock_settings.set_string.assert_called_with("day-or-night", "day")
 
 
-@patch("night_shift.bin.is_day_or_night._settings")
+@patch("night_shift.bin.is_day_or_night.Settings")
 def test_is_day_or_night_before_sunrise(mock_settings_func, mock_settings):
-    """Test detection of daytime"""
+    """Test detection night before sunrise"""
     mock_settings_func.return_value = mock_settings
 
     with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
@@ -38,9 +39,9 @@ def test_is_day_or_night_before_sunrise(mock_settings_func, mock_settings):
         mock_settings.set_string.assert_called_with("day-or-night", "night")
 
 
-@patch("night_shift.bin.is_day_or_night._settings")
+@patch("night_shift.bin.is_day_or_night.Settings")
 def test_is_day_or_night_at_sunrise(mock_settings_func, mock_settings):
-    """Test detection of daytime"""
+    """Test detection transition at sunrise"""
     mock_settings_func.return_value = mock_settings
 
     with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
@@ -51,9 +52,9 @@ def test_is_day_or_night_at_sunrise(mock_settings_func, mock_settings):
         mock_settings.set_string.assert_called_with("day-or-night", "day")
 
 
-@patch("night_shift.bin.is_day_or_night._settings")
+@patch("night_shift.bin.is_day_or_night.Settings")
 def test_is_day_or_night_before_sunset(mock_settings_func, mock_settings):
-    """Test detection of daytime"""
+    """Test detection of daytime before sunset"""
     mock_settings_func.return_value = mock_settings
 
     with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
@@ -64,9 +65,9 @@ def test_is_day_or_night_before_sunset(mock_settings_func, mock_settings):
         mock_settings.set_string.assert_called_with("day-or-night", "day")
 
 
-@patch("night_shift.bin.is_day_or_night._settings")
+@patch("night_shift.bin.is_day_or_night.Settings")
 def test_is_day_or_night_at_sunset(mock_settings_func, mock_settings):
-    """Test detection of daytime"""
+    """Test detection of transition at sunset"""
     mock_settings_func.return_value = mock_settings
 
     with patch("night_shift.bin.is_day_or_night.datetime") as mock_datetime:
@@ -77,7 +78,7 @@ def test_is_day_or_night_at_sunset(mock_settings_func, mock_settings):
         mock_settings.set_string.assert_called_with("day-or-night", "night")
 
 
-@patch("night_shift.bin.is_day_or_night._settings")
+@patch("night_shift.bin.is_day_or_night.Settings")
 def test_is_day_or_night_during_night(mock_settings_func, mock_settings):
     """Test detection of nighttime"""
     mock_settings_func.return_value = mock_settings
@@ -91,11 +92,12 @@ def test_is_day_or_night_during_night(mock_settings_func, mock_settings):
 
 
 @patch("night_shift.bin.is_day_or_night.Gio.Settings.new_full")
-def test_settings_builds_gio_settings(mock_new_full):
+def test_settings(mock_new_full):
     from night_shift.bin import is_day_or_night as module
 
-    settings = module._settings()
+    settings = module.Settings
 
     assert settings is mock_new_full.return_value
+
     schema_obj = mock_new_full.call_args.args[0]
     assert schema_obj.get_id() == "org.gnome.shell.extensions.night-shift"

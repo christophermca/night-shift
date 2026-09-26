@@ -3,43 +3,21 @@
 import os
 import gi
 
+from night_shift.bin.settings import Settings
 from datetime import datetime
 from pathlib import Path
 
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib
 
-SCHEMA_ID = "org.gnome.shell.extensions.night-shift"
-
-schema_dir = os.path.expanduser(
-    Path.home()
-    / ".local"
-    / "share"
-    / "gnome-shell"
-    / "extensions"
-    / "night-shift@christophermca.github.io"
-    / "schemas"
-)
-
-# Schema is loaded lazily (on first use) rather than at import time, so this
-# module can be imported/tested without a compiled schema on disk.
-_schema_source = None
-
-
-def _get_schema_source():
-    global _schema_source
-    if _schema_source is None:
-        _schema_source = Gio.SettingsSchemaSource.new_from_directory(
-            schema_dir, Gio.SettingsSchemaSource.get_default(), False
-        )
-    return _schema_source
-
 
 def is_day_or_night():
-    settings = _settings()
+    print("is_day_or_night")
+    settings = Settings()
 
     times: list[str] = settings.get_value("times")
     print(f"times{times}")
+
     [sunrise, sunset] = times
     current_time = datetime.now().strftime("%H:%M")  # 24hr format
 
@@ -56,14 +34,3 @@ def is_day_or_night():
         settings.set_string("day-or-night", DAY_NIGHT)
 
         print(f"{DAY_NIGHT}time")
-
-
-def _settings() -> object:
-    # initialize gsettings obj
-    data = _get_schema_source()
-    schema_obj = data.lookup(SCHEMA_ID, True)
-
-    print(schema_obj)
-    settings = Gio.Settings.new_full(schema_obj, None, None)
-
-    return settings

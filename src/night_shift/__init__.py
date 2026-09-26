@@ -7,7 +7,7 @@ import argparse
 
 
 def check():
-    print("check")
+    print("check-now")
     is_day_or_night()
 
 
