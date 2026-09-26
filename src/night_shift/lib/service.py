@@ -44,11 +44,17 @@ class Services:
                         print(f"SYMLINKED {unit.name}")
                         print("+++++\n")
 
-    def _start_services(self):
+    def _daemon_reload(self) -> None:
         try:
             subprocess.run(
                 ["systemctl", "--user", "daemon-reload"], check=True
             )
+        except subprocess.CalledProcessError as e:
+            print(f"Error: {e}")
+
+    def _start_services(self):
+        try:
+            self._daemon_reload()
 
             for timer in self.timers:
                 print(f"unit-name: {timer.name}")
@@ -63,9 +69,7 @@ class Services:
 
     def _stop_services(self):
         try:
-            subprocess.run(
-                ["systemctl", "--user", "daemon-reload"], check=True
-            )
+            self._daemon_reload()
 
             for timer in self.timers:
                 print(f"unit-name: {timer.name}")
@@ -91,6 +95,8 @@ class Services:
                     pass
                 finally:
                     print("-----\n")
+
+        self._daemon_reload()
 
     def setup(self):
         self._symlink()

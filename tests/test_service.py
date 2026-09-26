@@ -157,6 +157,14 @@ def test_stop_services_disables_every_timer(dirs, mock_run):
         )
 
 
+def test_stop_services_reloads_daemon(dirs, mock_run):
+    Services()._stop_services()
+
+    assert mock_run.call_args_list[0] == call(
+        ["systemctl", "--user", "daemon-reload"], check=True
+    )
+
+
 def test_start_services_catches_systemctl_failure(dirs, mock_run, capsys):
     import subprocess
 
@@ -170,6 +178,7 @@ def test_start_services_catches_systemctl_failure(dirs, mock_run, capsys):
     assert "Error:" in capsys.readouterr().out
 
 
+# Test method: destroy()
 def test_destroy_removes_symlinks(dirs, mock_run):
     _, target = dirs
     services = Services()
@@ -178,3 +187,32 @@ def test_destroy_removes_symlinks(dirs, mock_run):
     services.destroy()
 
     assert list(target.iterdir()) == []
+
+
+def test_destroy_keeps_custom_user_unit_files(dirs, mock_run):
+    _, target = dirs
+    target.mkdir()
+    (target / "a.timer").write_text("new custom user unit")
+
+    Services().destroy()
+
+    assert (target / "a.timer").read_text() == "new custom user unit"
+
+
+def test_destroy_removes_dangling_symlinks(dirs, mock_run, tmp_path):
+    _, target = dirs
+    target.mkdir()
+    (target / "a.timer").symlink_to(tmp_path / "gone")  # points at nothing
+
+    Services().destroy()
+
+    assert not (target / "a.timer").is_symlink()
+
+
+def test_destroy_disables_timers(dirs, mock_run):
+    Services().destroy()
+
+    for timer in ["a.timer", "b.timer"]:
+        mock_run.assert_any_call(
+            ["systemctl", "--user", "disable", "--now", timer], check=True
+        )
