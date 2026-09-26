@@ -1,48 +1,9 @@
-# LEARN: Lesson 5, the advanced material. Read lessons 1-4 first.
-#
-# `GetTimeOfSunriseSunset` touches three outside systems: GSettings (via
-# `Settings`), the HTTP API (via `requests`), and geoclue (via
-# `subprocess.Popen`). Each test fakes whichever of those it isn't about.
 import pytest
 from unittest.mock import Mock, patch, MagicMock, create_autospec
 import subprocess
 import requests
 from gi.repository import Gio, GLib
 from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
-
-
-@pytest.fixture
-def mock_settings():
-    """Mock Gio.Settings object"""
-    settings = MagicMock()
-    settings.get_string.return_value = ""
-    settings.get_boolean.return_value = (
-        False  # defaults to using "static location"
-    )
-    settings.get_value.return_value = (0.0, 0.0)
-    return settings
-
-
-###
-# Suggested code snippet by Claude Sonnet5
-###
-@pytest.fixture(autouse=True)
-def _patch_settings(mock_settings):
-    """Prevent GetTimeOfSunriseSunset.__init__ from touching real GSettings.
-
-    `Settings()` is instantiated unconditionally in __init__, and its
-    __init__ reaches out to the real (compiled) GNOME schema on disk.
-    Patch the class so `self.settings()` resolves to `mock_settings`,
-    matching Settings.__call__'s behavior.
-    """
-    with patch(
-        "night_shift.bin.get_sunrise_sunset.Settings"
-    ) as mock_settings_class:
-        mock_settings_class.return_value.return_value = mock_settings
-        yield mock_settings_class
-
-
-### END of suggested code snippet
 
 
 @patch(
@@ -274,21 +235,6 @@ class TestSave:
 
         assert "ERROR SAVING boom" in capsys.readouterr().out
 
-    # LEARN: This test shows the biggest weakness of plain MagicMock: it
-    # accepts ANY method name. The code calls `settings.set_bool(...)`, and
-    # a plain MagicMock happily records it. The real `Gio.Settings` has no
-    # `set_bool` (it's `set_boolean`), so the code breaks for real while
-    # every loose-mock test passes.
-    #
-    # `MagicMock(spec=Gio.Settings)` restricts the mock to the real class's
-    # attributes, so calling a method that doesn't exist raises
-    # AttributeError, exactly like production would. Mockito gets this for
-    # free because Java is type-checked. In Python you opt in with `spec`.
-    # Use it at important boundaries.
-    @pytest.mark.xfail(
-        strict=True,
-        reason="BUG: _save calls set_bool, but Gio.Settings only has set_boolean",
-    )
     def test_bool_uses_real_gio_method(self, mock_settings):
         instance = self._instance()
         real_api = MagicMock(spec=Gio.Settings)
@@ -323,7 +269,7 @@ def _fake_where_am_i(lines):
 
 class TestGeoclueLocation:
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
-    def test_parses_lat_lng(self, mock_popen, mock_settings):
+    def test_parses_lat_lng(self, mock_popen, mock_settings, _fake_where_am_i):
         agent = MagicMock()
         where_am_i = _fake_where_am_i(
             [
@@ -345,7 +291,7 @@ class TestGeoclueLocation:
 
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_override_saves_last_known_coordinates(
-        self, mock_popen, mock_settings
+        self, mock_popen, mock_settings, _fake_where_am_i
     ):
         mock_popen.side_effect = [
             MagicMock(),
@@ -360,7 +306,9 @@ class TestGeoclueLocation:
         assert variant.unpack() == (1.5, 2.5)
 
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
-    def test_no_location_raises(self, mock_popen, mock_settings):
+    def test_no_location_raises(
+        self, mock_popen, mock_settings, _fake_where_am_i
+    ):
         mock_popen.side_effect = [MagicMock(), _fake_where_am_i(["nothing\n"])]
         instance = GetTimeOfSunriseSunset()
 
@@ -377,7 +325,9 @@ class TestGeoclueLocation:
     # before the "°". strict xfail proved a hunch wrong, and this became a
     # normal test that guards that behavior.
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
-    def test_parses_real_where_am_i_format(self, mock_popen, mock_settings):
+    def test_parses_real_where_am_i_format(
+        self, mock_popen, mock_settings, _fake_where_am_i
+    ):
         mock_popen.side_effect = [
             MagicMock(),
             _fake_where_am_i(
