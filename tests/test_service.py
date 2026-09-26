@@ -136,11 +136,6 @@ def test_setup_links_then_reloads_daemon(dirs, mock_run):
     )
 
 
-# LEARN: Two xfail tests for one indentation bug. In `_start_services`,
-# `subprocess.run([... "enable" ...])` sits *after* the `for` loop rather
-# than inside it, so only the last timer is enabled. The test says what
-# SHOULD happen: every timer gets enabled. (xfail is explained in
-# test_is_day_or_night.py.)
 def test_start_services_enables_every_timer(dirs, mock_run):
     Services()._start_services()
 
@@ -175,14 +170,6 @@ def test_start_services_catches_systemctl_failure(dirs, mock_run, capsys):
     assert "Error:" in capsys.readouterr().out
 
 
-# LEARN: `raises=AttributeError` makes sure this counts as "expected to
-# fail" only because of the known typo (`self.units`). If it ever fails in
-# some other way, that shows up as a real failure.
-@pytest.mark.xfail(
-    strict=True,
-    raises=AttributeError,
-    reason="BUG: _remove_symlink iterates self.units, which doesn't exist (should be self.all_units)",
-)
 def test_destroy_removes_symlinks(dirs, mock_run):
     _, target = dirs
     services = Services()

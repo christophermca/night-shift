@@ -79,7 +79,7 @@ class Services:
             print(f"Error: {e}")
 
     def _remove_symlink(self):
-        for unit in self.units:
+        for unit in self.all_units:
             if unit.is_file():
                 try:
                     target = f"{target_dir}/{unit.name}"
