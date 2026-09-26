@@ -323,6 +323,7 @@ class TestGeoclueLocation:
         GetTimeOfSunriseSunset()._get_location()
 
         agent.kill.assert_called_once()
+        agent.wait.assert_called_once()
 
     @pytest.mark.parametrize(
         "error, message",

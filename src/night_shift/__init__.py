@@ -35,12 +35,14 @@ def main():
 
     parser.add_argument(
         "latitude",
+        type=float,
         nargs="?",
         help="compares current time with sunrise/sunset time",
     )
 
     parser.add_argument(
         "longitude",
+        type=float,
         nargs="?",
         help="compares current time with sunrise/sunset time",
     )
