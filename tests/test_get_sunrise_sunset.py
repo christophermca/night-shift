@@ -256,22 +256,11 @@ class TestSave:
 REAL_POPEN = subprocess.Popen
 
 
-def _fake_where_am_i(lines):
-    proc = MagicMock()
-    # LEARN: `side_effect` set to a *list* returns the next item on each
-    # call, like Mockito's `thenReturn(a, b, c)` or Jest's chained
-    # `mockReturnValueOnce`. It fakes reading a process's output line by
-    # line. The final "" is end-of-file, which stops the
-    # `iter(readline, "")` loop in the code.
-    proc.stdout.readline.side_effect = [*lines, ""]
-    return proc
-
-
 class TestGeoclueLocation:
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
-    def test_parses_lat_lng(self, mock_popen, mock_settings, _fake_where_am_i):
+    def test_parses_lat_lng(self, mock_popen, mock_settings, fake_where_am_i):
         agent = MagicMock()
-        where_am_i = _fake_where_am_i(
+        where_am_i = fake_where_am_i(
             [
                 "Client object: /org/freedesktop/GeoClue2/Client/1\n",
                 "New location:\n",
@@ -291,11 +280,11 @@ class TestGeoclueLocation:
 
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_override_saves_last_known_coordinates(
-        self, mock_popen, mock_settings, _fake_where_am_i
+        self, mock_popen, mock_settings, fake_where_am_i
     ):
         mock_popen.side_effect = [
             MagicMock(),
-            _fake_where_am_i(["Latitude: 1.5\n", "Longitude: 2.5\n"]),
+            fake_where_am_i(["Latitude: 1.5\n", "Longitude: 2.5\n"]),
         ]
         instance = GetTimeOfSunriseSunset(override=True)
 
@@ -307,9 +296,9 @@ class TestGeoclueLocation:
 
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_no_location_raises(
-        self, mock_popen, mock_settings, _fake_where_am_i
+        self, mock_popen, mock_settings, fake_where_am_i
     ):
-        mock_popen.side_effect = [MagicMock(), _fake_where_am_i(["nothing\n"])]
+        mock_popen.side_effect = [MagicMock(), fake_where_am_i(["nothing\n"])]
         instance = GetTimeOfSunriseSunset()
 
         # LEARN: `match=` is a regex searched against the exception message.
@@ -326,11 +315,11 @@ class TestGeoclueLocation:
     # normal test that guards that behavior.
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_parses_real_where_am_i_format(
-        self, mock_popen, mock_settings, _fake_where_am_i
+        self, mock_popen, mock_settings, fake_where_am_i
     ):
         mock_popen.side_effect = [
             MagicMock(),
-            _fake_where_am_i(
+            fake_where_am_i(
                 ["Latitude:    40.712800°\n", "Longitude:   -74.006000°\n"]
             ),
         ]
@@ -352,12 +341,14 @@ class TestGeoclueLocation:
         reason="BUG: cleanup checks callable(self.agent); a Popen is not callable, so the agent is never killed",
     )
     @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
-    def test_kills_geoclue_agent(self, mock_popen, mock_settings):
+    def test_kills_geoclue_agent(
+        self, mock_popen, mock_settings, fake_where_am_i
+    ):
         agent = create_autospec(REAL_POPEN, instance=True)
         agent.poll.return_value = 0
         mock_popen.side_effect = [
             agent,
-            _fake_where_am_i(["Latitude: 1.5\n", "Longitude: 2.5\n"]),
+            fake_where_am_i(["Latitude: 1.5\n", "Longitude: 2.5\n"]),
         ]
 
         GetTimeOfSunriseSunset()._get_location()

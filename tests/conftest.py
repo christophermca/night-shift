@@ -1,5 +1,9 @@
+import gi
 import pytest
 from unittest.mock import patch, MagicMock
+
+gi.require_version("GLib", "2.0")
+from gi.repository import GLib  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -26,5 +30,23 @@ def mock_settings():
     settings.get_boolean.return_value = (
         False  # defaults to using "static location"
     )
-    settings.get_value.return_value = (0.0, 0.0)
+    # Real Gio.Settings.get_value returns a GLib.Variant, not a tuple.
+    settings.get_value.return_value = GLib.Variant("(dd)", (0.0, 0.0))
     return settings
+
+
+@pytest.fixture
+def fake_where_am_i():
+    """Factory: build a fake geoclue `where-am-i` process that prints `lines`.
+
+    Usage: `fake_where_am_i(["Latitude: 1.5\\n", "Longitude: 2.5\\n"])`.
+    `readline` returns one line per call, then "" (end of output), which
+    stops the `iter(readline, "")` loop in `_get_location`.
+    """
+
+    def make(lines):
+        proc = MagicMock()
+        proc.stdout.readline.side_effect = [*lines, ""]
+        return proc
+
+    return make
