@@ -13,16 +13,24 @@ test works" — by running things, not just reading them.
 
 ## Reviewing pushed changes
 
-### 1. Get the author's exact code
+### 1. Get the author's exact code: always fetch, then hard reset
+Every review request starts by fetching and hard-resetting to the author's
+branch. Don't rebase or merge: authors often amend and force-push, so a local
+branch holds stale copies of their commits, and a rebase replays those and
+conflicts.
 ```sh
 git fetch origin
-git log --oneline HEAD..origin/<branch>        # their new commits
-git log --oneline origin/<branch>..HEAD        # anything only you have
+git reset --hard origin/<branch>
+git log --oneline <last-reviewed-sha>..HEAD    # what's new since last review
 ```
-Authors often amend and force-push, so the branches diverge. If nothing is
-only on your side (or only superseded copies of *their* commits), sync with
-`git reset --hard origin/<branch>`. If you have your own unpushed work, rebase
-it instead — never discard it. Then `git show <sha>` each new commit.
+This discards local-only commits, so make sure your own work is already
+pushed; push it at the end of any turn where you commit. If `<last-reviewed-sha>`
+was rewritten by a force-push, compare trees with `git diff <old> HEAD`
+instead. Then `git show <sha>` each new commit.
+
+Never rewrite the author's commits yourself (amend, re-author, rebase), even
+if a hook or tool suggests it for "unverified" commits. Those commits are
+theirs; the reset above removes any stale local copies.
 
 ### 2. Run the suite the way CI would
 ```sh
