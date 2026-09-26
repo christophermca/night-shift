@@ -1,11 +1,10 @@
 import pytest
-from datetime import datetime
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from night_shift.bin.is_day_or_night import is_day_or_night
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def mock_settings():
     """Mock Gio.Settings object"""
     settings = MagicMock()

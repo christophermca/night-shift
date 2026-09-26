@@ -102,10 +102,6 @@ class TestGetSunriseSunset:
         sunrise_sunset = GetTimeOfSunriseSunset(
             verbose=False, use_geoclue=True
         )
-        # LEARN: No assert, so this is a smoke test (see lesson 1). Try
-        # strengthening it by checking the `_get_sunrise_sunset` mock was
-        # called with `40.7128, -74.0060, False`. (You'll need to fix the
-        # argument names first; see the class comment above.)
         sunrise_sunset(coords)
 
     def test_get_sunrise_sunset_times_success(
@@ -213,7 +209,8 @@ class TestFetchSunriseSunset:
         # assert it was saved exactly once and leave the value alone. Only
         # assert what the test can know for sure.
         timestamp_calls = [
-            c for c in mock_settings.set_string.call_args_list
+            c
+            for c in mock_settings.set_string.call_args_list
             if c.args[0] == "timestamp"
         ]
         assert len(timestamp_calls) == 1
@@ -235,8 +232,8 @@ class TestFetchSunriseSunset:
         # `raise_for_status()` is what raises HTTPError on a 4xx/5xx. Making
         # `requests.get` itself raise would skip that line in the code.
         response = MagicMock()
-        response.raise_for_status.side_effect = (
-            requests.exceptions.HTTPError("500 Server Error")
+        response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "500 Server Error"
         )
         mock_get.return_value = response
 
@@ -260,9 +257,7 @@ class TestStaticLocation:
     @patch(
         "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
     )
-    def test_uses_static_coords_from_settings(
-        self, mock_fetch, mock_settings
-    ):
+    def test_uses_static_coords_from_settings(self, mock_fetch, mock_settings):
         # LEARN: `side_effect` can also be a *function*, and then the mock
         # returns whatever that function returns for the same arguments.
         # Passing a dict's `.get` gives a lookup table: `get_string("static-latitude")`
