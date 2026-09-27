@@ -1,15 +1,15 @@
 from unittest.mock import patch
-from night_shift.bin.settings import Settings
+from gnome_night_shift.bin.settings import Settings
 
 
-@patch("night_shift.bin.settings.Gio")
+@patch("gnome_night_shift.bin.settings.Gio")
 def test_call_returns_gio_settings(mock_gio):
     settings = Settings()
 
     assert settings() is mock_gio.Settings.new_full.return_value
 
 
-@patch("night_shift.bin.settings.Gio")
+@patch("gnome_night_shift.bin.settings.Gio")
 def test_looks_up_night_shift_schema(mock_gio):
     Settings()
 
@@ -37,7 +37,7 @@ def test_missing_schema_means_no_settings(tmp_path, monkeypatch, capsys):
     assert "settings unavailable" in capsys.readouterr().err
 
 
-@patch("night_shift.bin.settings.Gio")
+@patch("gnome_night_shift.bin.settings.Gio")
 def test_schema_not_in_directory_means_no_settings(mock_gio, capsys):
     source = mock_gio.SettingsSchemaSource.new_from_directory.return_value
     source.lookup.return_value = None  # directory exists, schema isn't in it
@@ -51,7 +51,7 @@ def test_schema_not_in_directory_means_no_settings(mock_gio, capsys):
     )
 
 
-@patch("night_shift.bin.settings.Gio")
+@patch("gnome_night_shift.bin.settings.Gio")
 def test_lookup_error_means_no_settings(mock_gio, capsys):
     source = mock_gio.SettingsSchemaSource.new_from_directory.return_value
     source.lookup.side_effect = RuntimeError("schema missing")

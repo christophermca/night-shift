@@ -1,8 +1,8 @@
 #!/usr/bin/python
-from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
-from night_shift.bin.is_day_or_night import is_day_or_night
-from night_shift.bin.settings import Settings
-from night_shift.lib.service import Services
+from gnome_night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
+from gnome_night_shift.bin.is_day_or_night import is_day_or_night
+from gnome_night_shift.bin.settings import Settings
+from gnome_night_shift.lib.service import Services
 import sys
 import argparse
 

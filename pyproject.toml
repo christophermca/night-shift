@@ -7,7 +7,7 @@ authors = [
   { name="Christopher McAdams", email="mca.christopher@gmail.com" }
 ]
 
-name = "night-shift"
+name = "gnome-night-shift"
 description = "Get Times of sunrise sunset for provided location"
 dependencies = ["requests>=2.28.0","pycairo","PyGObject" ]
 readme = "README.md"

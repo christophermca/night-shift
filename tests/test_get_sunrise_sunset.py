@@ -3,14 +3,14 @@ from unittest.mock import Mock, patch, MagicMock, create_autospec
 import subprocess
 import requests
 from gi.repository import Gio, GLib
-from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
+from gnome_night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 
 
 @patch(
-    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
+    "gnome_night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
 )
 @patch(
-    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
+    "gnome_night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
 )
 class TestGetSunriseSunset:
     def test_get_sunrise_sunset_init(
@@ -97,7 +97,7 @@ API_PAYLOAD = {
 
 
 class TestFetchSunriseSunset:
-    @patch("night_shift.bin.get_sunrise_sunset.requests.get")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
     def test_returns_hh_mm_times(self, mock_get, mock_settings):
         mock_get.return_value = _mock_response(API_PAYLOAD)
 
@@ -105,7 +105,7 @@ class TestFetchSunriseSunset:
 
         assert times == ("06:52", "18:51")
 
-    @patch("night_shift.bin.get_sunrise_sunset.requests.get")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
     def test_passes_coordinates_to_api(self, mock_get, mock_settings):
         mock_get.return_value = _mock_response(API_PAYLOAD)
 
@@ -116,7 +116,7 @@ class TestFetchSunriseSunset:
             {"lat": 40.7128, "lng": -74.0060},
         )
 
-    @patch("night_shift.bin.get_sunrise_sunset.requests.get")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
     def test_saves_times_tzid_and_timestamp(self, mock_get, mock_settings):
         mock_get.return_value = _mock_response(API_PAYLOAD)
 
@@ -135,7 +135,7 @@ class TestFetchSunriseSunset:
         assert variant.get_type_string() == "(ss)"
         assert variant.unpack() == ("06:52", "18:51")
 
-    @patch("night_shift.bin.get_sunrise_sunset.requests.get")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
     def test_http_error_returns_none_and_saves_nothing(
         self, mock_get, mock_settings
     ):
@@ -149,7 +149,7 @@ class TestFetchSunriseSunset:
         mock_settings.set_string.assert_not_called()
         mock_settings.set_value.assert_not_called()
 
-    @patch("night_shift.bin.get_sunrise_sunset.requests.get")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
     def test_verbose_prints_response(self, mock_get, mock_settings, capsys):
         mock_get.return_value = _mock_response(API_PAYLOAD)
 
@@ -160,7 +160,7 @@ class TestFetchSunriseSunset:
 
 class TestStaticLocation:
     @patch(
-        "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
+        "gnome_night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
     )
     def test_uses_static_coords_from_settings(self, mock_fetch, mock_settings):
         mock_settings.get_string.side_effect = {
@@ -176,7 +176,7 @@ class TestStaticLocation:
         assert variant.unpack() == (51.5074, -0.1278)
 
     @patch(
-        "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
+        "gnome_night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
     )
     def test_missing_static_coords_skips_fetch(
         self, mock_fetch, mock_settings, capsys
@@ -223,7 +223,7 @@ REAL_POPEN = subprocess.Popen
 
 
 class TestGeoclueLocation:
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_parses_lat_lng(self, mock_popen, mock_settings, fake_where_am_i):
         agent = MagicMock()
         where_am_i = fake_where_am_i(
@@ -250,7 +250,7 @@ class TestGeoclueLocation:
         ],
         ids=["unchanged", "moved", "override"],
     )
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_saves_coordinates_only_when_needed(
         self,
         mock_popen,
@@ -270,7 +270,7 @@ class TestGeoclueLocation:
 
         assert mock_settings.set_value.called is should_save
 
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_override_saves_last_known_coordinates(
         self, mock_popen, mock_settings, fake_where_am_i
     ):
@@ -286,7 +286,7 @@ class TestGeoclueLocation:
         assert key == "last-known-coordinates"
         assert variant.unpack() == (1.5, 2.5)
 
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_no_location_raises(
         self, mock_popen, mock_settings, fake_where_am_i
     ):
@@ -296,7 +296,7 @@ class TestGeoclueLocation:
         with pytest.raises(TypeError, match="Could not determine location"):
             instance._get_location()
 
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_parses_real_where_am_i_format(
         self, mock_popen, mock_settings, fake_where_am_i
     ):
@@ -309,7 +309,7 @@ class TestGeoclueLocation:
 
         assert GetTimeOfSunriseSunset()._get_location() == (40.7128, -74.006)
 
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_kills_geoclue_agent(
         self, mock_popen, mock_settings, fake_where_am_i
     ):
@@ -335,7 +335,7 @@ class TestGeoclueLocation:
         ],
         ids=["timeout", "process-error"],
     )
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_geoclue_failure_returns_none(
         self, mock_popen, error, message, mock_settings, capsys
     ):
@@ -354,7 +354,7 @@ def no_settings(_patch_settings):
 
 
 class TestWithoutSettings:
-    @patch("night_shift.bin.get_sunrise_sunset.requests.get")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
     def test_fetch_still_returns_times(self, mock_get, no_settings, capsys):
         mock_get.return_value = _mock_response(API_PAYLOAD)
 
@@ -366,7 +366,7 @@ class TestWithoutSettings:
             in capsys.readouterr().err
         )
 
-    @patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen")
+    @patch("gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen")
     def test_geoclue_still_returns_coords(
         self, mock_popen, no_settings, fake_where_am_i, capsys
     ):
@@ -381,7 +381,7 @@ class TestWithoutSettings:
         )
 
     @patch(
-        "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
+        "gnome_night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
     )
     def test_no_static_location_skips_fetch(
         self, mock_fetch, no_settings, capsys
@@ -393,7 +393,7 @@ class TestWithoutSettings:
 
 
 @patch(
-    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
+    "gnome_night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_sunrise_sunset"
 )
 def test_static_location_read_from_real_shaped_settings(
     mock_fetch, _patch_settings
@@ -412,7 +412,7 @@ def test_static_location_read_from_real_shaped_settings(
     mock_fetch.assert_called_once_with(51.5074, -0.1278, False)
 
 
-@patch("night_shift.bin.get_sunrise_sunset.requests.get")
+@patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
 def test_init_keeps_the_fetched_times(mock_get, mock_settings):
     mock_settings.get_string.side_effect = {
         "static-latitude": "51.5074",

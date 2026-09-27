@@ -8,7 +8,7 @@ import requests
 import subprocess
 import sys
 from typing import Any
-from night_shift.bin.settings import Settings
+from gnome_night_shift.bin.settings import Settings
 from datetime import datetime
 
 gi.require_version("Gio", "2.0")
@@ -142,7 +142,7 @@ class GetTimeOfSunriseSunset:
                 json_string = json.dumps(
                     response_data, indent=4, sort_keys=True
                 )
-                print(f"[night-shift] {json_string}")
+                print(f"[gnome-night-shift] {json_string}")
 
             tzid = response_data["tzid"]
             sunrise = datetime.fromisoformat(
@@ -157,7 +157,7 @@ class GetTimeOfSunriseSunset:
             saved: dict[str, Any] = {}
 
             print(
-                f"night-shift {response_data.get('sunrise'), response_data.get('sunset'), response_data.get('tzid')}"
+                f"gnome-night-shift {response_data.get('sunrise'), response_data.get('sunset'), response_data.get('tzid')}"
             )
 
             times_tuple = GLib.Variant("(ss)", times)
@@ -178,7 +178,7 @@ class GetTimeOfSunriseSunset:
         settings = self.settings()
         if settings is None:
             print(
-                f"night-shift: unable to save {', '.join(data)}: settings unavailable",
+                f"gnome-night-shift: unable to save {', '.join(data)}: settings unavailable",
                 file=sys.stderr,
             )
             return
@@ -208,7 +208,7 @@ class GetTimeOfSunriseSunset:
         settings = self.settings()
         if settings is None:
             print(
-                "night-shift: no static location: settings unavailable",
+                "gnome-night-shift: no static location: settings unavailable",
                 file=sys.stderr,
             )
             return None

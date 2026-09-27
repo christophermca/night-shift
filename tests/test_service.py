@@ -9,8 +9,8 @@
 import os
 import pytest
 from unittest.mock import patch, call
-from night_shift.lib import service
-from night_shift.lib.service import Services
+from gnome_night_shift.lib import service
+from gnome_night_shift.lib.service import Services
 
 UNITS = ["a.timer", "a.service", "b.timer"]
 
@@ -33,7 +33,7 @@ def dirs(tmp_path):
 
 @pytest.fixture
 def mock_run():
-    with patch("night_shift.lib.service.subprocess.run") as run:
+    with patch("gnome_night_shift.lib.service.subprocess.run") as run:
         yield run
 
 

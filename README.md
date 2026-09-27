@@ -25,7 +25,7 @@ Then **Night Shift** will attempt to create a Gsettings Object to store the data
 ### PIP
 
 ```bash
-pip install night-shift
+pip install gnome-night-shift
 ```
 
 ## Usage
