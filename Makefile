@@ -1,3 +1,4 @@
+PROJECT_NAME:=gnome-night-shift
 .PHONY: test
 test:
 	 virtualenv venv && \
@@ -25,3 +26,6 @@ rebuild:
 publish-testpypi: rebuild
 	source venv/bin/activate &&\
 	twine upload --repository testpypi dist/*
+
+install:
+	python -m pip install --index-url https://test.pypi.org/simple/ $(PROJECT_NAME)
