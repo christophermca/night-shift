@@ -3,6 +3,7 @@ from gnome_night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 from gnome_night_shift.bin.is_day_or_night import is_day_or_night
 from gnome_night_shift.bin.settings import Settings
 from gnome_night_shift.lib.service import Services
+
 import sys
 import argparse
 
@@ -93,10 +94,17 @@ def main():
     args = parser.parse_args()
 
     if sys.platform == "linux":
+        from pathlib import Path
+
+        package_dir = Path(__file__).parent
+        systemd_dir = package_dir / "systemd" / "user"
+
+        target_dir = Path.home() / ".local" / "share" / "systemd" / "user"
+        services = Services(systemd_dir, target_dir)
         if args.install_systemd_units:
-            return Services().setup()
+            return services.setup()
         elif args.remove_systemd_units:
-            return Services().destroy()
+            return services.destroy()
 
     if args.latitude is not None and args.longitude is not None:
         # One Settings per run, shared by everything below, so a missing

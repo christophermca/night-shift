@@ -29,3 +29,6 @@ publish-testpypi: rebuild
 
 install:
 	python -m pip install --index-url https://test.pypi.org/simple/ $(PROJECT_NAME)
+
+install-dev:
+	python -m pip install -e .
