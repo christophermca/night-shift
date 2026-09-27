@@ -77,9 +77,6 @@ def test_check_now_runs_check(argv, settings_class):
 
     settings_class.assert_called_once_with()
 
-    # LEARN: `assert_called_once_with()` with no arguments means "called
-    # once, with no arguments". That's stricter than `assert_called_once()`,
-    # which ignores the arguments.
     check.assert_called_once_with(settings=settings_class.return_value)
 
 
@@ -90,20 +87,20 @@ def test_geoclue_runs_once_with_geoclue(argv, mock_fetcher, settings_class):
 
     settings_class.assert_called_once_with()
 
-    # LEARN: The positional args are (verbose, override, use_geoclue). That
-    # makes a bare `(True, True, True)` hard to read, and it can't catch
-    # two arguments being swapped. Code that uses keyword args tends to be
-    # easier to test.
+    verbose = True
+    override = True
+    use_geoclue = True
+
     mock_fetcher.assert_called_once_with(
-        True, True, True, settings=settings_class.return_value
+        verbose, override, use_geoclue, settings=settings_class.return_value
     )
 
 
-# LEARN: `@pytest.mark.parametrize` runs one test body with several inputs,
+# `@pytest.mark.parametrize` runs one test body with several inputs,
 # and each row is reported as its own test:
 #     test_systemd_unit_flags[--install-systemd-units-setup]  PASSED
 #     test_systemd_unit_flags[--remove-systemd-units-destroy] PASSED
-# It's Jest's `test.each` or JUnit 5's `@ParameterizedTest` + `@CsvSource`.
+#
 # The first argument is a comma-separated list of parameter names. Each
 # tuple in the list is one row.
 @pytest.mark.parametrize(
@@ -119,8 +116,6 @@ def test_systemd_unit_flags(argv, flag, method):
     with patch("night_shift.Services") as services:
         night_shift.main()
 
-    # LEARN: `getattr(obj, "name")` is Python's `obj["name"]` or
-    # `obj[method]` in JS, and it's how the row picks which method to check.
     getattr(services.return_value, method).assert_called_once_with()
 
 
@@ -129,10 +124,10 @@ def test_no_args_prints_help(argv, mock_fetcher, capsys):
 
     night_shift.main()
 
-    # LEARN: `capsys.readouterr()` returns `(out, err)` and *clears* the
+    # `capsys.readouterr()` returns `(out, err)` and *clears* the
     # buffer, so a second call only sees output printed after the first.
     assert "usage:" in capsys.readouterr().out
-    # LEARN: Asserting that something did NOT happen matters just as much.
+    # Asserting that something did NOT happen matters just as much.
     # Here it proves "no args" doesn't quietly start a network fetch.
     mock_fetcher.assert_not_called()
 
@@ -196,7 +191,7 @@ def test_paths_without_settings_dont_create_them(
 
 
 def test_run_once_catches_fetch_errors(mock_fetcher, capsys):
-    # LEARN: The mock *class* raises when it's constructed, which simulates
+    # The mock *class* raises when it's constructed, which simulates
     # `GetTimeOfSunriseSunset(...)` blowing up (no network, say). The test
     # proves `run_once` catches it rather than crashing.
     mock_fetcher.side_effect = RuntimeError("offline")
@@ -207,7 +202,7 @@ def test_run_once_catches_fetch_errors(mock_fetcher, capsys):
 
 
 def test_run_once_catches_check_errors(mock_fetcher, capsys):
-    # LEARN: `patch(...)` takes the same keyword args as MagicMock, so you
+    # `patch(...)` takes the same keyword args as MagicMock, so you
     # can set up `side_effect` / `return_value` inline.
     with patch("night_shift.check", side_effect=RuntimeError("no schema")):
         night_shift.run_once(check_now=True)

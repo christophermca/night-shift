@@ -11,12 +11,15 @@ target_dir = Path.home() / ".local" / "share" / "systemd" / "user"
 
 
 class Services:
-    def __init__(self):
+    def __init__(self, source_dir=None, target_dir=None):
+        self.source_dir = source_dir
+        self.target_dir = target_dir
+
         if sys.platform != "linux":
             sys.exit("Error: Systemd units can ony be deployed on linux")
 
         list_of_units = []
-        with os.scandir(systemd_dir) as units:
+        with os.scandir(self.source_dir) as units:
             for unit in units:
                 list_of_units.append(unit)
 
@@ -26,13 +29,14 @@ class Services:
         ]
 
     def _symlink(self):
-        target_dir.mkdir(parents=True, exist_ok=True)
+        print(f"find-me, {self.target_dir}")
+        self.target_dir.mkdir(parents=True, exist_ok=True)
 
-        with os.scandir(systemd_dir) as units:
+        with os.scandir(self.source_dir) as units:
             for unit in self.all_units:
                 if unit.is_file():
                     try:
-                        target = f"{target_dir}/{unit.name}"
+                        target = f"{self.target_dir}/{unit.name}"
                         os.symlink(unit.path, target)
                     except FileExistsError:
                         if os.path.islink(target):
@@ -86,7 +90,7 @@ class Services:
         for unit in self.all_units:
             if unit.is_file():
                 try:
-                    target = f"{target_dir}/{unit.name}"
+                    target = f"{self.target_dir}/{unit.name}"
                     if os.path.islink(target):
                         os.remove(target)
                         print(f"Removed {unit.name}")
@@ -111,4 +115,4 @@ class Services:
 
 
 if __name__ == "__main__":
-    Services()
+    Services(systemd_dir, target_dir)
