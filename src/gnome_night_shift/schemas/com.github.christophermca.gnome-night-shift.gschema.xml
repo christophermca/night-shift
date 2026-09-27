@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="com.github.christophermca.gnome-night-shift" path="/com/github/christophermca/gnome-night-shift">
+    <key name="use-geoclue" type="b">
+      <description>Use Geoclue to determine location</description>
+      <default>true</default>
+    </key>
+    <key name="times" type="(ss)">
+      <default>("sunrise","sunset")</default>
+      <summary>Exactaly two times represented as strings</summary>
+    </key>
+    <key name="day-or-night" type="s">
+      <summary>day or night</summary>
+      <default>"day"</default>
+    </key>
+    <key name="last-known-coordinates" type="(dd)">
+      <summary>(Lat, Lng)</summary>
+      <description>Last coordinates saved in cache</description>
+      <default>(0.0, 0.0)</default>
+    </key>
+    <key name="static-longitude" type="s">
+      <summary>User-defined longitude</summary>
+      <default>""</default>
+    </key>
+    <key name="static-latitude" type="s">
+      <summary>User-defined latitude</summary>
+      <default>""</default>
+    </key>
+    <key name="tzid" type="s">
+      <summary>timezone id</summary>
+      <default>""</default>
+    </key>
+    <key name="timestamp" type="s">
+      <description>timestamp of last run</description>
+      <default>""</default>
+    </key>
+  </schema>
+</schemalist>

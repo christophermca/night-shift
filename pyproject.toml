@@ -27,16 +27,16 @@ include-package-data = true
 where = ["src"]
 
 [project.optional-dependencies]
-systemd = [
-  "systemd-python; platform_system == 'Linux'"
-]
+# systemd = [
+#   "systemd-python; platform_system == 'Linux'"
+# ]
 
 dev = [
   "black", "locust"
 ]
 
 [tool.setuptools.package-data]
-"*" =  ["*.timer", "*.service"]
+"*" =  ["systemd/users/*.timer", "systemd/users/*.service", "schemas/*.xml"]
 
 classifiers = [
   "Programming Language :: Python :: 3",

@@ -76,7 +76,7 @@ class Services:
             self._daemon_reload()
 
             for timer in self.timers:
-                print(f"unit-name: {timer.name}")
+                print(f"stopping timer: {timer.name}")
 
                 subprocess.run(
                     ["systemctl", "--user", "disable", "--now", timer.name],
@@ -97,8 +97,8 @@ class Services:
                     print(f"{unit.name} was not found")
                     pass
                 finally:
-                    print("-----\n")
-                    print(f"Removed {unit.name}")
+                    print("-----")
+                    print(f"Removed {unit.name}\n")
 
         self._daemon_reload()
 

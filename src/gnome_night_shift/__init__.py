@@ -101,14 +101,14 @@ def main():
 
         target_dir = Path.home() / ".local" / "share" / "systemd" / "user"
         services = Services(systemd_dir, target_dir)
+
         if args.install_systemd_units:
             return services.setup()
         elif args.remove_systemd_units:
             return services.destroy()
 
     if args.latitude is not None and args.longitude is not None:
-        # One Settings per run, shared by everything below, so a missing
-        # schema is reported once. Only created on paths that need it.
+        # One Settings per run, shared by everything below, so a missing schema is reported once. Only created on paths that need it.
         settings = Settings()
         coords = tuple([args.latitude, args.longitude])
         sunrise_sunset = GetTimeOfSunriseSunset(

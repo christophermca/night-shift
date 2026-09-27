@@ -1,4 +1,5 @@
 PROJECT_NAME:=gnome-night-shift
+PATH_TO_SCHEMA_FILE:="$(HOME)/.local/share"
 .PHONY: test
 test:
 	 virtualenv venv && \
@@ -32,3 +33,10 @@ install:
 
 install-dev:
 	python -m pip install -e .
+
+comile-schema:
+	cd $(PATH_TO_SCHEMA_FILE) &&\
+	glib-compile-schemas .
+
+edit-schema:
+	GSETTINGS_SCHEMA="$(PATH_TO_SCHEMA_FILE)" dconf-editor
