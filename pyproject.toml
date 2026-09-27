@@ -6,24 +6,40 @@ requires = ["setuptools>=61.0"]
 authors = [
   { name="Christopher McAdams", email="mca.christopher@gmail.com" }
 ]
+
 name = "night-shift"
 description = "Get Times of sunrise sunset for provided location"
 dependencies = ["requests>=2.28.0","pycairo","PyGObject" ]
 readme = "README.md"
 requires-python = ">=3.0"
-version = "0.1.0"
+version = "0.2.0"
 
 [project.urls]
 Homepage = "https://github.com/christophermca/night-shift"
 
-# [tool.pytest.ini_options]
-# pythonpath = ["src"]
+[project.scripts]
+night-shift = "night_shift:main"
 
-classifiers = [
-  "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
-  "Operating System :: Linux",
-]
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.optional-dependencies]
+systemd = [
+  "systemd-python; platform_system == 'Linux'"
+]
+
+dev = [
+  "black", "locust"
+]
+
+[tool.setuptools.package-data]
+"*" =  ["*.timer", "*.service"]
+
+# classifiers = [
+#   "Programming Language :: Python :: 3",
+#   "License :: OSI Approved :: MIT License",
+#   "Operating System :: Linux",
+# ]

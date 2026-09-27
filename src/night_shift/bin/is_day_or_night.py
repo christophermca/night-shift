@@ -1,60 +1,49 @@
 #!/usr/bin/python
 
-import os
-import gi
+import sys
 
+from night_shift.bin.settings import Settings
 from datetime import datetime
-from pathlib import Path
-
-gi.require_version("Gio", "2.0")
-from gi.repository import Gio, GLib
-
-SCHEMA_ID = "org.gnome.shell.extensions.night-shift"
-
-schema_dir = os.path.expanduser(
-    Path.home()
-    / ".local"
-    / "share"
-    / "gnome-shell"
-    / "extensions"
-    / "night-shift@christophermca.github.io"
-    / "schemas"
-)
-
-# Load schema
-schema_source = Gio.SettingsSchemaSource.new_from_directory(
-    schema_dir, Gio.SettingsSchemaSource.get_default(), False
-)
 
 
-def is_day_or_night():
-    settings = _settings()
+def is_day_or_night(times=None, settings=None):
+    """Work out "day" or "night" and save it.
 
-    times: list[str] = settings.get_value("times")
+    `times` is a (sunrise, sunset) pair of "HH:MM" strings. When it's not
+    given, the times saved in settings are used. `settings` is a `Settings`
+    to share with the caller; a new one is created when it's not given.
+    """
+    print("is_day_or_night")
+    settings = (settings if settings is not None else Settings())()
+
+    if times is None:
+        if settings is None:
+            print(
+                "night-shift: unable to check day or night: no saved sunrise/sunset times",
+                file=sys.stderr,
+            )
+            return None
+        times = settings.get_value("times")
+
     [sunrise, sunset] = times
     current_time = datetime.now().strftime("%H:%M")  # 24hr format
 
     # check if currrent time is after sunrise or sunset
     DAY_NIGHT: str
 
-    if current_time >= sunrise:
+    if sunrise <= current_time < sunset:
         DAY_NIGHT = "day"
-
-    if current_time >= sunset:
+    else:
         DAY_NIGHT = "night"
 
     # set day-or-night
-    if DAY_NIGHT:
+    if settings is None:
+        print(
+            "night-shift: unable to save day-or-night: settings unavailable",
+            file=sys.stderr,
+        )
+    else:
         settings.set_string("day-or-night", DAY_NIGHT)
 
-
-def _settings() -> object:
-    # initialize gsettings obj
-    schemaObj = schema_source.lookup(SCHEMA_ID, True)
-    settings = Gio.Settings.new_full(schemaObj, None, None)
-
-    return settings
-
-
-if __name__ == "__main__":
-    is_day_or_night()
+    print(f"{DAY_NIGHT}time")
+    return DAY_NIGHT
