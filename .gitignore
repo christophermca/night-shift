@@ -1,5 +1,5 @@
 #claude (limit amount claude updates in repo)
-.claude/**/*
+.claude/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
