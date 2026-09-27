@@ -1,5 +1,6 @@
 **/__pycache__/
+build/
 venv/
 **/*.egg-info*
 .coverage
-src/**/*.pyc
+/**/*.pyc
