@@ -13,3 +13,11 @@ test-nocov:
 	pip install -U pytest \
 	requests pycairo PyGObject &&\
 	python -m pytest tests -c pytest.ini --no-cov
+
+build:
+	source venv/bin/activate &&\
+	python -m build
+
+publish-testpypi:
+	source venv/bin/activate &&\
+	twine upload --repository testpypi dist/*
