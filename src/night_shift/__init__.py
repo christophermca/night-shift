@@ -111,7 +111,6 @@ def main():
             return check(times, settings)
 
     elif args.use_geoclue:
-        print("should use geoclue")
         return run_once(
             args.verbose,
             args.override,
