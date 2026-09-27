@@ -12,13 +12,13 @@ description = "Get Times of sunrise sunset for provided location"
 dependencies = ["requests>=2.28.0","pycairo","PyGObject" ]
 readme = "README.md"
 requires-python = ">=3.0"
-version = "0.2.0"
+version = "0.2.2"
 
 [project.urls]
 Homepage = "https://github.com/christophermca/night-shift"
 
 [project.scripts]
-night-shift = "night_shift:main"
+night-shift = "gnome_night_shift:main"
 
 [tool.setuptools]
 include-package-data = true

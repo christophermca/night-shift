@@ -18,6 +18,10 @@ build:
 	source venv/bin/activate &&\
 	python -m build
 
-publish-testpypi:
+rebuild:
+	rm -rf dist/ &&\
+	$(MAKE) build
+
+publish-testpypi: rebuild
 	source venv/bin/activate &&\
 	twine upload --repository testpypi dist/*
