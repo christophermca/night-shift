@@ -9,8 +9,7 @@
 import os
 import pytest
 from unittest.mock import patch, call
-from gnome_night_shift.lib import service
-from gnome_night_shift.lib.service import Services
+from gnome_night_shift.services import Services
 
 UNITS = ["a.timer", "a.service", "b.timer"]
 
@@ -33,7 +32,7 @@ def dirs(tmp_path):
 
 @pytest.fixture
 def mock_run():
-    with patch("gnome_night_shift.lib.service.subprocess.run") as run:
+    with patch("subprocess.run") as run:
         yield run
 
 
@@ -47,7 +46,9 @@ def test_init_collects_units_and_timers(dirs):
 
 def test_init_refuses_non_linux(dirs, monkeypatch):
     # mock using macOS
-    monkeypatch.setattr(service.sys, "platform", "darwin")
+    import sys
+
+    monkeypatch.setattr(sys, "platform", "darwin")
 
     with pytest.raises(SystemExit):
         Services()
@@ -118,7 +119,8 @@ def test_stop_services_disables_every_timer(dirs, mock_run):
 
 
 def test_stop_services_reloads_daemon(dirs, mock_run):
-    Services()._stop_services()
+    source, target = dirs
+    Services(source, target)._stop_services()
 
     assert mock_run.call_args_list[0] == call(
         ["systemctl", "--user", "daemon-reload"], check=True
@@ -126,11 +128,13 @@ def test_stop_services_reloads_daemon(dirs, mock_run):
 
 
 def test_start_services_catches_systemctl_failure(dirs, mock_run, capsys):
+    source, target = dirs
+
     import subprocess
 
     mock_run.side_effect = subprocess.CalledProcessError(1, "systemctl")
 
-    Services()._start_services()
+    Services(source, target)._start_services()
 
     assert "Error:" in capsys.readouterr().out
 
@@ -147,21 +151,21 @@ def test_destroy_removes_symlinks(dirs, mock_run):
 
 
 def test_destroy_keeps_custom_user_unit_files(dirs, mock_run):
-    _, target = dirs
+    source, target = dirs
     target.mkdir()
     (target / "a.timer").write_text("new custom user unit")
 
-    Services().destroy()
+    Services(source, target).destroy()
 
     assert (target / "a.timer").read_text() == "new custom user unit"
 
 
 def test_destroy_removes_dangling_symlinks(dirs, mock_run, tmp_path):
-    _, target = dirs
+    source, target = dirs
     target.mkdir()
     (target / "a.timer").symlink_to(tmp_path / "gone")  # points at nothing
 
-    Services(_, target).destroy()
+    Services(source, target).destroy()
 
     assert not (target / "a.timer").is_symlink()
 

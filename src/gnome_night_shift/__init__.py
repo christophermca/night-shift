@@ -2,7 +2,8 @@
 from gnome_night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 from gnome_night_shift.bin.is_day_or_night import is_day_or_night
 from gnome_night_shift.bin.settings import Settings
-from gnome_night_shift.lib.service import Services
+from gnome_night_shift.services import Services
+
 
 import sys
 import argparse
@@ -96,7 +97,7 @@ def main():
     if sys.platform == "linux":
         from pathlib import Path
 
-        package_dir = Path(__file__).parent
+        package_dir = Path(__file__).parent / "services"
         systemd_dir = package_dir / "systemd" / "user"
 
         target_dir = Path.home() / ".local" / "share" / "systemd" / "user"

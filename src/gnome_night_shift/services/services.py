@@ -2,16 +2,10 @@
 import sys
 import os
 import subprocess
-from pathlib import Path
-
-package_dir = Path(__file__).parent.parent
-systemd_dir = package_dir / "systemd" / "user"
-
-target_dir = Path.home() / ".local" / "share" / "systemd" / "user"
 
 
 class Services:
-    def __init__(self, source_dir=None, target_dir=None):
+    def __init__(self, source_dir="", target_dir=""):
         self.source_dir = source_dir
         self.target_dir = target_dir
 
@@ -114,5 +108,11 @@ class Services:
         self._remove_symlink()
 
 
-if __name__ == "__main__":
-    Services(systemd_dir, target_dir)
+# if __name__ == "__main__":
+#     from pathlib import Path
+
+#     package_dir = Path(__file__).parent
+#     systemd_dir = package_dir / "systemd" / "user"
+#     target_dir = Path.home() / ".local" / "share" / "systemd" / "user"
+
+#     Services(systemd_dir, target_dir)
