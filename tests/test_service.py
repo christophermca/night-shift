@@ -21,7 +21,7 @@ UNITS = ["a.timer", "a.service", "b.timer"]
 # `tmp_path / "systemd" / "user"` is `path.join(tmp, "systemd", "user")`.
 @pytest.fixture
 def dirs(tmp_path):
-    source = tmp_path / "systemd" / "user"
+    source = tmp_path / "services" / "systemd" / "user"
     source.mkdir(parents=True)  # like `mkdir -p`
     for name in UNITS:
         (source / name).write_text(f"[Unit]\nDescription={name}\n")

@@ -6,7 +6,9 @@ import pytest
 import gnome_night_shift
 from unittest.mock import patch
 
-UNIT_DIR = Path(gnome_night_shift.__file__).parent / "systemd" / "user"
+UNIT_DIR = (
+    Path(gnome_night_shift.__file__).parent / "services" / "systemd" / "user"
+)
 SERVICE_UNITS = sorted(UNIT_DIR.glob("*.service"))
 PYPROJECT = Path(__file__).parents[1] / "pyproject.toml"
 

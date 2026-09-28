@@ -36,7 +36,8 @@ dev = [
 ]
 
 [tool.setuptools.package-data]
-"*" =  ["systemd/users/*.timer", "systemd/users/*.service", "schemas/*.xml"]
+"*" =  ["schemas/*.xml"]
+"gnome-night-shift.services" =  ["systemd/users/*.timer", "systemd/users/*.service", "schemas/*.xml"]
 
 classifiers = [
   "Programming Language :: Python :: 3",

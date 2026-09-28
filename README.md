@@ -1,12 +1,15 @@
 # GNOME Night Shift
 
-Night Shift will provide the time of the sunrise and sunset for the provided location.
-Night shift can also check the current state("day" or "night") for the provided location.
+Night Shift will lookup the time of the sunrise and sunset for the provided location.
+
+- night-shift can also check if the current state of the 24hr period is day or night
+- night-shift Services
 
 
 ## Features
 
-* Uses sunrise and sunset times for your location. Requires Location services to be enabled. **(Settings > Privacy & Security > Location > Enable "Automatic Device Location"**
+* Use geoclue to determine location. Requires Location services to be enabled. **(Settings > Privacy & Security > Location > Enable "Automatic Device Location"**
+* Run night-shift as a systemd service.
 
 ## How It Works
 
@@ -54,8 +57,6 @@ options:
                         Linux-only: Remove optional systemd units
 
 ```
-
-
 
 ## Source Code
 
