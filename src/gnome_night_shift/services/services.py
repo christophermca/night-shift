@@ -106,13 +106,3 @@ class Services:
     def destroy(self):
         self.stop()
         self._remove_symlink()
-
-
-# if __name__ == "__main__":
-#     from pathlib import Path
-
-#     package_dir = Path(__file__).parent
-#     systemd_dir = package_dir / "systemd" / "user"
-#     target_dir = Path.home() / ".local" / "share" / "systemd" / "user"
-
-#     Services(systemd_dir, target_dir)

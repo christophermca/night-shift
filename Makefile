@@ -1,23 +1,22 @@
 PROJECT_NAME:=gnome-night-shift
-PATH_TO_SCHEMA_FILE:="$(HOME)/.local/share"
+PATH_TO_SCHEMA_FILE:="./schemas/"
 .PHONY: test
-test:
-	 virtualenv venv && \
-	. venv/bin/activate &&\
+test: dev
 	pip install -U pytest \
 	requests pycairo PyGObject &&\
 	python -m pytest tests -c pytest.ini
 
 .PHONY: test
-test-nocov:
-	 virtualenv venv && \
-	. venv/bin/activate &&\
+test-nocov: dev
 	pip install -U pytest \
 	requests pycairo PyGObject &&\
 	python -m pytest tests -c pytest.ini --no-cov
 
-build:
-	source venv/bin/activate &&\
+dev:
+	virtualenv venv && \
+	. venv/bin/activate
+
+build: dev
 	python -m build
 
 rebuild:
@@ -33,6 +32,9 @@ install:
 
 install-dev:
 	python -m pip install -e .
+
+upgrade-dev:
+	python -m pip install --upgrade .
 
 comile-schema:
 	cd $(PATH_TO_SCHEMA_FILE) &&\

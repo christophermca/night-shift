@@ -22,20 +22,19 @@ class GetTimeOfSunriseSunset:
         self,
         verbose: bool = False,
         override: bool = False,
-        use_geoclue: bool = False,
+        use_geoclue: bool | None = False,
         settings: Settings | None = None,
     ):
         self.override = override
         self.verbose = verbose
         self.use_geoclue = use_geoclue
-        self.settings = settings if settings is not None else Settings()
+        self.settings = settings
         self.agent = None
         self.times: tuple[str, str] | None = None
 
         coords: tuple[float, float] | None
 
-        print(f"use geoclue: {self.use_geoclue}")
-        if not self.use_geoclue:
+        if self.use_geoclue is not True:
             coords: tuple[float, float] = (
                 self._get_static_location_from_settings()
             )
@@ -43,11 +42,12 @@ class GetTimeOfSunriseSunset:
             coords: tuple[float, float] = self._get_location()
 
         if coords:
-            print(f"coords: {coords}")
             self.times = self._get_sunrise_sunset(*coords, self.verbose)
+            print(f"coords{coords}")
+            print(f"times: {self.times}")
 
-    def __call__(self, coords, verbose=False):
-        return self._get_sunrise_sunset(*coords, verbose)
+    # def __call__(self, coords, verbose=False):
+    #     return self._get_sunrise_sunset(*coords, verbose)
 
     def _get_location(self) -> tuple[float, float]:
         try:
@@ -93,10 +93,9 @@ class GetTimeOfSunriseSunset:
                 )
             coords = tuple(arr)
 
-            settings = self.settings()
             previous_coordinates = None
-            if settings is not None:
-                previous_coordinates = settings.get_value(
+            if self.settings is not None:
+                previous_coordinates = self.settings.get(
                     "last-known-coordinates"
                 ).unpack()
 
@@ -156,10 +155,6 @@ class GetTimeOfSunriseSunset:
 
             saved: dict[str, Any] = {}
 
-            print(
-                f"gnome-night-shift {response_data.get('sunrise'), response_data.get('sunset'), response_data.get('tzid')}"
-            )
-
             times_tuple = GLib.Variant("(ss)", times)
             saved = {
                 "timestamp": f"{datetime.now().astimezone().isoformat()}",
@@ -175,10 +170,9 @@ class GetTimeOfSunriseSunset:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
 
     def _save(self, data) -> None:
-        settings = self.settings()
-        if settings is None:
+        if self.settings is None:
             print(
-                f"gnome-night-shift: unable to save {', '.join(data)}: settings unavailable",
+                f"gnome-night-shift: unable to save {', '.join(data)}: self.settings unavailable",
                 file=sys.stderr,
             )
             return
@@ -188,13 +182,15 @@ class GetTimeOfSunriseSunset:
 
                 match value:
                     case str():
-                        settings.set_string(key, value)
+                        self.settings.set(key, value)
                     case bool():
-                        settings.set_boolean(key, value)
+                        self.settings.set(key, value)
                     case int():
-                        settings.set_int(key, value)
+                        print("int")
+                        self.settings.set(key, value)
                     case _:
-                        settings.set_value(key, value)
+                        print(f"case__{key}")
+                        self.settings.set(key, value)
 
             if self.verbose:
                 print(f"{data}")
@@ -205,16 +201,15 @@ class GetTimeOfSunriseSunset:
 
     def _get_static_location_from_settings(self) -> tuple[float, float]:
 
-        settings = self.settings()
-        if settings is None:
+        if self.settings is None:
             print(
-                "gnome-night-shift: no static location: settings unavailable",
+                "gnome-night-shift: no static location: self.settings unavailable",
                 file=sys.stderr,
             )
             return None
 
-        lat = settings.get_string("static-latitude")
-        lng = settings.get_string("static-longitude")
+        lat = self.settings.get("static-latitude")
+        lng = self.settings.get("static-longitude")
 
         if lat and lng:
             static_location = (float(lat), float(lng))

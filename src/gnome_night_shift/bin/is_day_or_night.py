@@ -13,7 +13,7 @@ def is_day_or_night(times=None, settings=None):
     given, the times saved in settings are used. `settings` is a `Settings`
     to share with the caller; a new one is created when it's not given.
     """
-    print("is_day_or_night")
+    print("\nIs it day or night? ...")
     settings = (settings if settings is not None else Settings())()
 
     if times is None:
@@ -23,7 +23,7 @@ def is_day_or_night(times=None, settings=None):
                 file=sys.stderr,
             )
             return None
-        times = settings.get_value("times")
+        times = settings.get("times")
 
     [sunrise, sunset] = times
     current_time = datetime.now().strftime("%H:%M")  # 24hr format
@@ -43,7 +43,7 @@ def is_day_or_night(times=None, settings=None):
             file=sys.stderr,
         )
     else:
-        settings.set_string("day-or-night", DAY_NIGHT)
+        settings.set("day-or-night", DAY_NIGHT)
 
     print(f"{DAY_NIGHT}time")
     return DAY_NIGHT
