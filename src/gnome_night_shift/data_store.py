@@ -2,10 +2,6 @@ import subprocess
 from gi.repository import Gio, GLib
 from typing import TypedDict, NotRequired, get_type_hints
 
-# package_dir = Path(__file__).parent
-# schema_dir = package_dir / "schemas"
-
-
 default_config_file = ".var/gnome-night-shift/data.json"
 SCHEMA_ID = "org.gnome.shell.extensions.night-shift"
 
@@ -54,16 +50,16 @@ class DataStore:
             self.data = Gio.Settings.new_full(self.schema, None, None)
 
     def get(self, key: str):
-        # settings = Gio.Settings(self.schema)
         annotations = get_type_hints(Store)
 
-        undersc = key.replace("-", "_")
-        value = annotations.get(undersc)
-        match value():
-            case str():
+        norm_key = key.replace("-", "_")
+        value = annotations.get(norm_key)()
+
+        match value:
+            case bool():
                 value = self.data[key]
                 return value
-            case bool():
+            case str():
                 value = self.data[key]
                 return value
             case int():
@@ -74,11 +70,8 @@ class DataStore:
                 return value
 
     def set(self, key: str, value):
-        # Match the value itself. The old `match type(value)():` built an empty
-        # example of the type, which fails for GLib.Variant ("missing 2
-        # required positional arguments").
         match value:
-            case bool():  # before int: bool is a subclass of int
+            case bool():  # bool must go before int: bool is a subclass of int
                 self.data.set_boolean(key, value)
             case str():
                 self.data.set_string(key, value)
