@@ -1,5 +1,5 @@
 import subprocess
-from gi.repository import Gio
+from gi.repository import Gio, GLib
 from typing import TypedDict, NotRequired, get_type_hints
 
 # package_dir = Path(__file__).parent
@@ -74,21 +74,22 @@ class DataStore:
                 return value
 
     def set(self, key: str, value):
-        print("key_you", key, value)
-        valueType = type(value)
-
-        match valueType():
-            case str():
-                print(key)
-                self.data.set_string(key, value)
-            case bool():
-                print(key)
+        # Match the value itself. The old `match type(value)():` built an empty
+        # example of the type, which fails for GLib.Variant ("missing 2
+        # required positional arguments").
+        match value:
+            case bool():  # before int: bool is a subclass of int
                 self.data.set_boolean(key, value)
+            case str():
+                self.data.set_string(key, value)
             case int():
-                print("int", key)
                 self.data.set_int(key, value)
+            case GLib.Variant():  # tuples like "times" (ss) and coords (dd)
+                self.data.set_value(key, value)
             case _:
-                self.data.set_property(key, value)
+                raise TypeError(
+                    f"can't save {key}: unsupported type {type(value).__name__}"
+                )
 
     @property
     def available(self) -> bool:
