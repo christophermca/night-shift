@@ -9,19 +9,26 @@ import sys
 import argparse
 
 
+def user_passes_check_now_arg(args):
+    if args.check_now == None:
+        return args.check_now == True
+
+
 def user_passes_watch_arg(args):
-    return args.watch is not False
+    return args.watch != False
 
 
 def check(times=None, settings=None):
-    # Returns None on purpose: the console script does sys.exit(main()).
-    is_day_or_night(times, settings=Settings)
+    try:
+        is_day_or_night(times, settings=settings)
+    except AttributeError as e:
+        print(f"{e}")
 
 
 def run_once(
     verbose: bool = False,
     override: bool = False,
-    check_now: bool = False,
+    check_now: bool | str | None = False,
     use_geoclue: bool = False,
     settings=None,
 ):
@@ -29,7 +36,7 @@ def run_once(
         sunrise_sunset = GetTimeOfSunriseSunset(
             verbose, override, use_geoclue, settings
         )
-        if check_now == True:
+        if check_now != True:
             try:
                 check(sunrise_sunset.times, settings)
             except Exception as e:
@@ -61,7 +68,8 @@ def main():
     parser.add_argument(
         "-c",
         "--check-now",
-        action="store_true",
+        nargs="?",
+        default=False,
         help="compares current time with sunrise/sunset time",
     )
     parser.add_argument(
@@ -96,9 +104,10 @@ def main():
     )
 
     args = parser.parse_args()
+    print(f"DEBUG: {args}")
 
     if user_passes_watch_arg(args):
-        if args.watch is None:
+        if args.watch == None:
             args.watch = "DEFAULT"
 
         # use a data_store
@@ -107,8 +116,10 @@ def main():
 
         # call night-shift watching settings
         GetTimeOfSunriseSunset(args.verbose, args.override, None, settings)
+        if args.check_now:
+            return check(None, settings)
 
-    elif args.latitude is not None and args.longitude is not None:
+    elif args.latitude != None and args.longitude != None:
         # One Settings per run, shared by everything below, so a missing schema is reported once. Only created on paths that need it.
         settings = Settings()
         coords = tuple([args.latitude, args.longitude])
@@ -127,8 +138,14 @@ def main():
             args.use_geoclue,
         )
 
-    elif args.check_now:
-        return check(settings=Settings())
+    elif args.check_now != False:
+        user_passes_check_now_arg(args)
+        if type(args.check_now) is str:
+            data_store = DataStore(args.check_now)
+            settings = Settings(data_store)
+            return check(settings=settings)
+
+        return check(settings=None)
 
     else:
         parser.print_help()

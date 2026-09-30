@@ -34,12 +34,19 @@ class GetTimeOfSunriseSunset:
 
         coords: tuple[float, float] | None
 
-        if self.use_geoclue is not True:
+        if self.use_geoclue is None:
+            self.use_geoclue = self.settings.get("use-geoclue")
+            print(f"FROM SETTINGS use_geoclue: {self.use_geoclue}")
+
+        if self.use_geoclue is True:
+            print(f"use_geoclue: {self.use_geoclue}")
+            coords: tuple[float, float] = self._get_location()
+
+        else:
+            print(f"use_geoclue: {self.use_geoclue}")
             coords: tuple[float, float] = (
                 self._get_static_location_from_settings()
             )
-        else:
-            coords: tuple[float, float] = self._get_location()
 
         if coords:
             self.times = self._get_sunrise_sunset(*coords, self.verbose)
@@ -97,7 +104,12 @@ class GetTimeOfSunriseSunset:
             if self.settings is not None:
                 previous_coordinates = self.settings.get(
                     "last-known-coordinates"
-                ).unpack()
+                )
+                try:
+                    print(previous_coordinates)
+                    previous_coordinates
+                except Exception as e:
+                    print(f"{e}")
 
             if self.override or (coords != previous_coordinates):
                 last_known_coordinates = GLib.Variant("(dd)", coords)
