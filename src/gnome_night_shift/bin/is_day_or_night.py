@@ -14,15 +14,13 @@ def is_day_or_night(times=None, settings=None):
     to share with the caller; a new one is created when it's not given.
     """
     print("\nIs it day or night? ...")
-    settings = (settings if settings is not None else Settings())()
+    settings = settings
 
     if times is None:
         if settings is None:
-            print(
-                "gnome-night-shift: unable to check day or night: no saved sunrise/sunset times",
-                file=sys.stderr,
+            raise AttributeError(
+                "gnome-night-shift: unable to check day or night. \nMISSING No `Times` (sunrise, sunset) given AND/OR no saved sunrise/sunset times",
             )
-            return None
         times = settings.get("times")
 
     [sunrise, sunset] = times

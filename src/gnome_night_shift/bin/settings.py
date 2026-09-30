@@ -44,8 +44,9 @@ class Settings:
                     file=sys.stderr,
                 )
         else:
-            self.use_schema(data_store.schema)
-            self.data_store = data_store
+            if data_store.schema:
+                self.use_schema(data_store.schema)
+                self.data_store = data_store
 
     def use_schema(self, schema):
         settings = Gio.Settings.new_full(schema, None, None)
@@ -60,19 +61,20 @@ class Settings:
         return self.settings is not None
 
     def get_keys(self):
-        print("gettings all keys\n\n")
-        print(f"data_store::{self.data_store}")
+        print("START: gettings all keys\n\n")
         try:
             for key, value in self.data_store:
                 print(key, value)
         except Exception as e:
             print(f"SOMETHING BAD::: {e}")
         finally:
-            print("END gettings all keys")
+            print("END: gettings all keys\n")
 
     def get(self, key: str):
-        return self.data_store.get(key)
+        try:
+            return self.data_store.get(key)
+        except AttributeError as e:
+            print(f"Error: Failed to GET key:`{key}`\nMessage:: {e}")
 
     def set(self, key, value):
-        print("key-me", key)
         self.data_store.set(key, value)
