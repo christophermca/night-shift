@@ -39,12 +39,14 @@ class Store(TypedDict):
 
 class DataStore:
 
-    def __init__(self, schema_path):
-        self.data: Store | None = None
+    def __init__(self, schema_path: str):
+        self.data: GObject | Store | None = None
         if schema_path == "DEFAULT":
-            self.data_path = default_config_file
-            self.schema = None
-            self.data = None
+            pass
+            # FEATURE handle DEFAULT
+            # self.data_path = default_config_file
+            # self.schema = None
+            # self.data = None
         else:
             self.schema = _compile_schema(schema_path, SCHEMA_ID)
             self.data = Gio.Settings.new_full(self.schema, None, None)
@@ -87,7 +89,3 @@ class DataStore:
     @property
     def available(self) -> bool:
         return self.data is not None
-
-
-if __name__ == "__main__":
-    DataStore()
