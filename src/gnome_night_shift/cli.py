@@ -1,12 +1,14 @@
 #!/usr/bin/python
+# PYTHON_ARG_COMPLETE_OK
 from gnome_night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 from gnome_night_shift.bin.is_day_or_night import is_day_or_night
 from gnome_night_shift.bin.settings import Settings
-from gnome_night_shift.services import Services
+from gnome_night_shift.services import NightShiftServices, setup_arguments
 from .data_store import DataStore
 
 import sys
 import argparse
+import argcomplete
 
 
 def user_passes_check_now_arg(args):
@@ -48,8 +50,17 @@ def run_once(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Get the times for the sunrise/sunset"
+        description="Get the times for the sunrise/sunset",
+        prog="night-shift",
     )
+
+    services_parser = parser.add_subparsers(
+        dest="command",
+        title="services",
+        description="valid commands",
+    )
+
+    setup_arguments(services_parser)
 
     parser.add_argument(
         "latitude",
@@ -68,6 +79,7 @@ def main():
     parser.add_argument(
         "-c",
         "--check-now",
+        metavar="SCHEMA_PATH",
         nargs="?",
         default=False,
         help="compares current time with sunrise/sunset time",
@@ -93,6 +105,7 @@ def main():
         "--watch",
         nargs="?",
         default=False,
+        metavar="SCHEMA_PATH",
         help="watch for changes in data_store",
     )
 
@@ -103,8 +116,17 @@ def main():
         help="Prints all data",
     )
 
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    print(f"DEBUG: {args}")
+
+    if args.command == "services":
+        night_shift_services = NightShiftServices(schema=args.schema)
+        if args.subcommand == "setup":
+            return night_shift_services.setup(args.schema, args.build_only)
+        elif args.subcommand == "start":
+            return night_shift_services.start()
+        elif args.subcommand == "stop":
+            return night_shift_services.stop()
 
     if user_passes_watch_arg(args):
         if args.watch == None:

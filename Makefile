@@ -12,6 +12,7 @@ test-nocov: dev
 	requests pycairo PyGObject &&\
 	python -m pytest tests -c pytest.ini --no-cov
 
+
 dev:
 	virtualenv venv && \
 	. venv/bin/activate

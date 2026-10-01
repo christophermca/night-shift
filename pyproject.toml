@@ -19,10 +19,6 @@ Homepage = "https://github.com/christophermca/night-shift"
 
 [project.scripts]
 night-shift = "gnome_night_shift:main"
-night-shift--initialize = "gnome_night_shift:Datastore"
-night-shift-services = "gnome_night_shift.services:setup"
-night-shift-remove-services = "gnome_night_shift.services:destroy"
-night-shift--check-me = "gnome_night_shift.services:check_me"
 
 [tool.setuptools]
 include-package-data = true
