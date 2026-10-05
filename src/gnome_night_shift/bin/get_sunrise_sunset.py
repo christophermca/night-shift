@@ -36,10 +36,8 @@ class GetTimeOfSunriseSunset:
 
         if self.use_geoclue is None:
             self.use_geoclue = self.settings.get("use-geoclue")
-            print(f"FROM SETTINGS use_geoclue: {self.use_geoclue}")
 
         if self.use_geoclue is True:
-            print(f"use_geoclue: {self.use_geoclue}")
             coords: tuple[float, float] = self._get_location()
 
         else:
@@ -48,13 +46,14 @@ class GetTimeOfSunriseSunset:
                 self._get_static_location_from_settings()
             )
 
+        print(f"use coords, {coords}")
         if coords:
             self.times = self._get_sunrise_sunset(*coords, self.verbose)
             print(f"coords{coords}")
             print(f"times: {self.times}")
 
-    # def __call__(self, coords, verbose=False):
-    #     return self._get_sunrise_sunset(*coords, verbose)
+    def __call__(self, coords, verbose=False):
+        return self._get_sunrise_sunset(*coords, verbose)
 
     def _get_location(self) -> tuple[float, float]:
         try:
@@ -198,13 +197,12 @@ class GetTimeOfSunriseSunset:
                     case bool():
                         self.settings.set(key, value)
                     case int():
-                        print("int")
                         self.settings.set(key, value)
                     case _:
                         print(f"case__{key}")
                         self.settings.set(key, value)
 
-            if self.verbose:
+            if self.verbose > 0:
                 print(f"{data}")
 
         except Exception as e:

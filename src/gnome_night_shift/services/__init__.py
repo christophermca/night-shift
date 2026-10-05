@@ -13,9 +13,7 @@ class NightShiftServices(Services):
         self,
         source_dir=source_units_dir,
         target_dir=target_dir,
-        schema=None,
     ):
-        self.schema_path = schema
         super().__init__(source_dir, target_dir)
 
     def setup(self, schema_path, build_only):

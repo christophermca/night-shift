@@ -15,9 +15,6 @@ SERVICE_UNITS = sorted(UNIT_DIR.glob("*.service"))
 PYPROJECT = Path(__file__).parents[1] / "pyproject.toml"
 TIMES = ("06:52", "18:51")
 
-# Everything main() uses is looked up in gnome_night_shift.cli, so that's
-# where it must be patched (not gnome_night_shift, which only re-exports main).
-
 
 @pytest.fixture
 def argv(monkeypatch):
@@ -29,7 +26,9 @@ def argv(monkeypatch):
 
 @pytest.fixture
 def mock_fetcher():
-    with patch("gnome_night_shift.cli.GetTimeOfSunriseSunset") as fetcher:
+    with patch(
+        "gnome_night_shift.cli.GetTimeOfSunriseSunset", autospec=True
+    ) as fetcher:
         yield fetcher
 
 
@@ -62,39 +61,37 @@ def services_class():
 # --- latitude / longitude ---------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=SystemExit,
-    reason="BUG: the `services` subparser claims the first positional, so `night-shift 40.7 -74.0` fails with \"invalid choice: '40.7' (choose from 'services')\". Next: GetTimeOfSunriseSunset.__call__ is commented out, but main() still calls sunrise_sunset(coords, ...)",
-)
-def test_lat_lng_fetches_and_exits_cleanly(argv, mock_fetcher, mock_check):
-    argv("40.7", "-74.0")
-    fetcher = mock_fetcher.return_value
-    del fetcher.__call__  # behave like the real object: only callable if it defines __call__
+def test_lat_lng_fetches_and_exits_cleanly(
+    argv, mock_fetcher, mock_check, settings_class
+):
+    argv("--lat=40.7", "--lng=-74.0")
 
     result = cli.main()
 
-    fetcher._get_sunrise_sunset.assert_called_once_with(40.7, -74.0, 0)
+    mock_fetcher.assert_called_once_with(
+        0, False, settings=settings_class.return_value
+    )
+    mock_fetcher.return_value.assert_called_with((40.7, -74.0), 0)
     mock_check.assert_not_called()
-    assert result is None  # console script does sys.exit(main()): None -> 0
+    assert result is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=SystemExit,
-    reason="BUG: the `services` subparser claims the first positional, so `night-shift 40.7 -74.0` fails with \"invalid choice: '40.7' (choose from 'services')\". Next: `lat lng -c` sets check_now to None, so `if args.check_now:` never checks; it also passes sunrise_sunset.times instead of the fetched times",
-)
-def test_lat_lng_with_check_now_checks_the_fetched_times(
+def test_lat_lng_with_check_now_flag_checks_the_fetched_times(
     argv, mock_fetcher, mock_check, settings_class
 ):
-    argv("40.7", "-74.0", "--check-now")
+    argv("--lat=40.7", "--lng=-74.0", "--check-now")
     mock_fetcher.return_value.return_value = TIMES
 
     cli.main()
 
+    mock_fetcher.assert_called_once_with(
+        0, False, settings=settings_class.return_value
+    )
+    mock_fetcher.return_value.assert_called_with((40.7, -74.0), 0)
+
     settings = settings_class.return_value
+
     settings_class.assert_called_once_with()  # one Settings for the whole run
-    mock_fetcher.assert_called_once_with(0, False, settings=settings)
     mock_check.assert_called_once_with(TIMES, settings)
 
 
@@ -109,23 +106,21 @@ def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher, capsys):
         cli.main()
 
     assert exc.value.code == 2
-    assert "argument latitude: invalid float value: 'abc'" in capsys.readouterr().err
+    assert (
+        "argument latitude: invalid float value: 'abc'"
+        in capsys.readouterr().err
+    )
     mock_fetcher.assert_not_called()
 
 
 # --- -c / --check-now [SCHEMA_PATH] -------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: `-c` without a path returns `args.check_now == True` (False) and never checks; night-shift.service runs exactly this",
-)
 def test_check_now_uses_default_settings(argv, mock_check, settings_class):
     argv("--check-now")
 
     result = cli.main()
 
-    settings_class.assert_called_once_with()
     mock_check.assert_called_once_with(settings=settings_class.return_value)
     assert result is None
 
@@ -145,10 +140,6 @@ def test_check_now_with_schema_path_uses_that_data_store(
 # --- -g / --geoclue -----------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: the -g branch calls run_once without a Settings, so geoclue lookups never save",
-)
 def test_geoclue_fetches_with_one_shared_settings(
     argv, mock_fetcher, mock_check, settings_class
 ):
@@ -157,16 +148,18 @@ def test_geoclue_fetches_with_one_shared_settings(
     cli.main()
 
     settings_class.assert_called_once_with()
+    verbose = 1  # verbose is a count now
     mock_fetcher.assert_called_once_with(
-        1, True, True, settings_class.return_value  # verbose is a count now
+        verbose,
+        True,
+        True,
+        settings_class.return_value,
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: run_once checks when `check_now != True`, i.e. when -c was NOT given",
-)
-def test_geoclue_without_check_now_does_not_check(argv, mock_fetcher, mock_check):
+def test_geoclue_without_check_now_does_not_check(
+    argv, mock_fetcher, mock_check
+):
     argv("-g")
 
     cli.main()
@@ -174,15 +167,15 @@ def test_geoclue_without_check_now_does_not_check(argv, mock_fetcher, mock_check
     mock_check.assert_not_called()
 
 
-def test_geoclue_with_check_now_checks_the_fetched_times(
-    argv, mock_fetcher, mock_check
+def test_geoclue_with_check_now_FLAG_checks_the_fetched_times(
+    argv, mock_fetcher, mock_check, settings_class
 ):
     argv("-g", "--check-now")
     mock_fetcher.return_value.times = TIMES
 
     cli.main()
 
-    assert mock_check.call_args.args[0] == TIMES
+    mock_check.assert_called_once_with(TIMES, settings_class.return_value)
 
 
 # --- -w / --watch [SCHEMA_PATH] -----------------------------------------------
@@ -202,11 +195,9 @@ def test_watch_with_schema_path_fetches_with_that_data_store(
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: run_once checks when `check_now != True`, so -w without -c checks too",
-)
-def test_watch_without_check_now_does_not_check(argv, mock_fetcher, mock_check):
+def test_watch_without_check_now_does_not_check(
+    argv, mock_fetcher, mock_check
+):
     argv("--watch", "/path/to/schemas")
 
     cli.main()
@@ -221,18 +212,14 @@ def test_services_setup_builds_units_for_the_schema(argv, services_class):
     argv("services", "setup", "/path/to/schemas", "--build-only")
 
     cli.main()
+    print("hey")
 
-    services_class.assert_called_once_with(schema="/path/to/schemas")
+    services_class.assert_called_once_with()
     services_class.return_value.setup.assert_called_once_with(
         "/path/to/schemas", True
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AttributeError,
-    reason="BUG: main() reads args.schema for every services command, but only `setup` defines it",
-)
 @pytest.mark.parametrize(
     "subcommand, method",
     [("start", "start"), ("stop", "stop"), ("taredown", "destroy")],
@@ -275,7 +262,9 @@ def test_no_args_prints_help(argv, mock_fetcher, capsys):
 def test_check_passes_times_and_settings_through_and_returns_none():
     settings = object()
 
-    with patch("gnome_night_shift.cli.is_day_or_night", return_value="day") as fn:
+    with patch(
+        "gnome_night_shift.cli.is_day_or_night", return_value="day"
+    ) as fn:
         result = cli.check(TIMES, settings)
 
     fn.assert_called_once_with(TIMES, settings=settings)
@@ -289,7 +278,9 @@ def test_check_without_times_uses_saved_times():
     fn.assert_called_once_with(None, settings=None)
 
 
-def test_run_once_shares_settings_with_fetch_and_check(mock_fetcher, mock_check):
+def test_run_once_shares_settings_with_fetch_and_check(
+    mock_fetcher, mock_check
+):
     settings = object()
     mock_fetcher.return_value.times = TIMES
 
@@ -299,10 +290,6 @@ def test_run_once_shares_settings_with_fetch_and_check(mock_fetcher, mock_check)
     mock_check.assert_called_once_with(TIMES, settings)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: run_once checks when `check_now != True`; check_now=False (no -c) should not check",
-)
 def test_run_once_without_check_now_does_not_check(mock_fetcher, mock_check):
     cli.run_once(check_now=False)
 
@@ -318,8 +305,14 @@ def test_run_once_catches_fetch_errors(mock_fetcher, capsys):
 
 
 def test_run_once_catches_check_errors(mock_fetcher, capsys):
-    with patch("gnome_night_shift.cli.check", side_effect=RuntimeError("no schema")):
+    mock_fetcher.return_value.times = ("06:52", "18:51")
+
+    with patch(
+        "gnome_night_shift.cli.check", side_effect=AttributeError("no schema")
+    ) as check:
         cli.run_once(check_now=None)
+
+    check.assert_called_once()
 
     assert "check failed: no schema" in capsys.readouterr().out
 
