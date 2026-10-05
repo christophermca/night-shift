@@ -121,7 +121,7 @@ class Services:
 
     def _make_copy_of_unit(
         self,
-        units: List[str],
+        units: list[str],
         schema_path: str | None,
         save_to_path: str | None,
     ) -> str | None:
