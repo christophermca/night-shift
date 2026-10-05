@@ -20,7 +20,7 @@ NOAA = "https://api.sunrise-sunset.org/v2"
 class GetTimeOfSunriseSunset:
     def __init__(
         self,
-        verbose: bool = False,
+        verbose: int = 0,
         override: bool = False,
         use_geoclue: bool | None = False,
         settings: Settings | None = None,
@@ -138,7 +138,7 @@ class GetTimeOfSunriseSunset:
                 print(f"Error: {e}")
 
     def _get_sunrise_sunset(
-        self, lat: float, lng: float, verbose: bool
+        self, lat: float, lng: float, verbose: int
     ) -> tuple[float, float]:
         try:
             params = {"lat": lat, "lng": lng}

@@ -11,15 +11,6 @@ import argparse
 import argcomplete
 
 
-def user_passes_check_now_arg(args):
-    if args.check_now == None:
-        return args.check_now == True
-
-
-def user_passes_watch_arg(args):
-    return args.watch != False
-
-
 def check(times=None, settings=None):
     try:
         is_day_or_night(times, settings=settings)
@@ -28,11 +19,11 @@ def check(times=None, settings=None):
 
 
 def run_once(
-    verbose: bool = False,
+    verbose: int = False,
     override: bool = False,
     check_now: bool | str | None = False,
-    use_geoclue: bool = False,
-    settings=None,
+    use_geoclue: bool | None = False,
+    settings: Settings | None = None,
 ):
     try:
         sunrise_sunset = GetTimeOfSunriseSunset(
@@ -55,9 +46,7 @@ def main():
     )
 
     services_parser = parser.add_subparsers(
-        dest="command",
-        title="services",
-        description="valid commands",
+        dest="command", title="commands", metavar=""
     )
 
     setup_arguments(services_parser)
@@ -110,10 +99,18 @@ def main():
     )
 
     parser.add_argument(
-        "-v",
-        "--verbose",
+        "-V",
+        "--version",
         action="store_true",
         help="Prints all data",
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        default=0,
+        action="count",
+        help="Increase output verbosity",
     )
 
     argcomplete.autocomplete(parser)
@@ -123,12 +120,14 @@ def main():
         night_shift_services = NightShiftServices(schema=args.schema)
         if args.subcommand == "setup":
             return night_shift_services.setup(args.schema, args.build_only)
+        elif args.subcommand == "taredown":
+            return night_shift_services.destroy()
         elif args.subcommand == "start":
             return night_shift_services.start()
         elif args.subcommand == "stop":
             return night_shift_services.stop()
 
-    if user_passes_watch_arg(args):
+    if args.watch != False:
         if args.watch == None:
             args.watch = "DEFAULT"
 
@@ -136,21 +135,24 @@ def main():
         data_store = DataStore(args.watch)
         settings = Settings(data_store)
 
-        # call night-shift watching settings
-        GetTimeOfSunriseSunset(args.verbose, args.override, None, settings)
-        if args.check_now:
-            return check(None, settings)
+        # CALL night-shift watching settings
+        # TODO validate using run_once will work here.
+        run_once(args.verbose, args.override, args.check_now, None, settings)
+        # GetTimeOfSunriseSunset(args.verbose, args.override, None, settings)
+        # if args.check_now:
+        #     return check(None, settings)
 
     elif args.latitude != None and args.longitude != None:
         # One Settings per run, shared by everything below, so a missing schema is reported once. Only created on paths that need it.
         settings = Settings()
+
         coords = tuple([args.latitude, args.longitude])
         sunrise_sunset = GetTimeOfSunriseSunset(
             args.verbose, args.override, settings=settings
         )
         times = sunrise_sunset(coords, args.verbose)
         if args.check_now:
-            return check(times, settings)
+            check(sunrise_sunset.times, settings)
 
     elif args.use_geoclue:
         return run_once(
@@ -161,7 +163,10 @@ def main():
         )
 
     elif args.check_now != False:
-        user_passes_check_now_arg(args)
+
+        if args.check_now == None:
+            return args.check_now == True
+
         if type(args.check_now) is str:
             data_store = DataStore(args.check_now)
             settings = Settings(data_store)
