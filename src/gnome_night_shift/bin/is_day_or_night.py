@@ -10,16 +10,18 @@ def is_day_or_night(times=None, settings=None):
     """Work out "day" or "night" and save it.
 
     `times` is a (sunrise, sunset) pair of "HH:MM" strings. When it's not
-    given, the times saved in settings are used. `settings` is a `Settings`
-    to share with the caller; a new one is created when it's not given.
+    given, the times saved in settings are used.
+
+    `settings` is a `Settings`. When it's not given, raise an Error to the caller;
     """
+
     print("\nIs it day or night? ...")
     settings = settings
 
     if times is None:
         if settings is None:
             raise AttributeError(
-                "gnome-night-shift: unable to check day or night. \nMISSING No `Times` (sunrise, sunset) given AND/OR no saved sunrise/sunset times",
+                "gnome-night-shift: unable to check `day or night`. \nMISSING required attribute `Times` (sunrise, sunset)."
             )
         times = settings.get("times")
 
