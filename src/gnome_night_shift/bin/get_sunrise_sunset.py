@@ -34,22 +34,22 @@ class GetTimeOfSunriseSunset:
 
         coords: tuple[float, float] | None
 
-        user_passed_geoclue_option = self.use_geoclue is not False
-        print("FINDME", user_passed_geoclue_option)
-
-        # get coords
+        # set coords
         if self.use_geoclue is None and self.settings is not None:
             self.use_geoclue = self.settings.get("use-geoclue")
 
         if self.use_geoclue is True:
+            print("qwe")
             coords = self._get_location()
         else:
             coords = self._get_static_location_from_settings()
+        print(coords)
 
-        # get times
+        # set times
         if coords:
             self.times = self._get_sunrise_sunset(*coords, self.verbose)
 
+    # pass coords from cli to module
     def __call__(self, coords, verbose=False):
         return self._get_sunrise_sunset(*coords, verbose)
 
@@ -103,7 +103,6 @@ class GetTimeOfSunriseSunset:
                     "last-known-coordinates"
                 )
                 try:
-                    print(previous_coordinates)
                     previous_coordinates
                 except Exception as e:
                     print(f"{e}")

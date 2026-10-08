@@ -81,7 +81,7 @@ class TestGetSunriseSunset:
             verbose=verbose,
             override=override,
             use_geoclue=use_geoclue,
-            settings=settings,
+            settings=self.settings,
         )
 
         assert object.use_geoclue == False
@@ -102,7 +102,7 @@ class TestGetSunriseSunset:
             verbose=verbose,
             override=override,
             use_geoclue=use_geoclue,
-            settings=None,
+            settings=self.settings,
         )
 
         assert object.use_geoclue == None
@@ -113,7 +113,7 @@ class TestGetSunriseSunset:
     "gnome_night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
 )
 @patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
-class TestGivenSettings:
+class TestSettingsIsSet:
 
     def test_when_geoclue_is_None_and_settings_is_set(
         self, requests, mock_get_location, settings
@@ -131,11 +131,10 @@ class TestGivenSettings:
             settings=settings,
         )
 
-        print(settings)
         assert object.use_geoclue is False
 
         # fetched the times and saved them back to settings
-        # assert settings.store["times"] == GLib.Variant(
-        #     "(ss)", ("06:52", "18:51")
-        # )
+        assert settings.store["times"] == GLib.Variant(
+            "(ss)", ("06:52", "18:51")
+        )
         assert settings.store["tzid"] == "America/New_York"

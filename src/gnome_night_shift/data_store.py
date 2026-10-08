@@ -43,7 +43,7 @@ class DataStore:
         self.data: GObject | Store | None = None
         if schema_path == "DEFAULT":
             pass
-            # FEATURE handle DEFAULT
+            # TODO FEATURE handle DEFAULT
             # self.data_path = default_config_file
             # self.schema = None
             # self.data = None
