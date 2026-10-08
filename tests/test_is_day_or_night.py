@@ -65,15 +65,18 @@ def test_is_day_or_night_during_night():
     assert result == "night"
 
 
-# @pytest.mark.parametrize(
-#     "now, expected", [("05:59", "night"), ("12:00", "day"), ("18:30", "night")]
-# )
-def test_given_times_are_used_instead_of_saved_ones():
-    TIMES = ("07:00", "20:00")
-    result = is_day_or_night(TIMES, None)
-    assert result == "night"
+@pytest.mark.parametrize(
+    "now, expected", [("05:59", "night"), ("12:00", "day"), ("18:30", "night")]
+)
+def test_given_times_are_used_instead_of_saved_ones(now, expected):
+    with freeze_time(now):
+        assert datetime.datetime.now().strftime("%H:%M") == now
+        TIMES = ("07:00", "18:00")
+        result = is_day_or_night(TIMES, None)
+        assert result == expected
 
 
+@freeze_time("21:00")
 def test_given_times_work_without_settings():
     TIMES = ("07:00", "20:00")
     result = is_day_or_night(TIMES, None)
@@ -81,7 +84,7 @@ def test_given_times_work_without_settings():
 
 
 @freeze_time("14:00")
-def test_uses_the_settings_it_is_given_in_day(settings_class):
+def test_uses_the_settings_it_is_given_in_day():
     TIMES = None
     settings = create_autospec(Settings, instance=True)
     settings.get.return_value = ("07:00", "20:00")
@@ -90,9 +93,14 @@ def test_uses_the_settings_it_is_given_in_day(settings_class):
 
 
 @freeze_time("21:00")
-def test_uses_the_settings_it_is_given_at_night(settings_class):
+def test_uses_the_settings_it_is_given_at_night():
     TIMES = None
     settings = create_autospec(Settings, instance=True)
     settings.get.return_value = ("07:00", "20:00")
     result = is_day_or_night(TIMES, settings)
     assert result == "night"
+
+
+def test_when_time_and_settings_are_None():
+    with pytest.raises(AttributeError):
+        is_day_or_night(None, None)

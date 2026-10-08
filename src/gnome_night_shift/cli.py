@@ -15,7 +15,7 @@ def check(times=None, settings=None):
     try:
         is_day_or_night(times, settings=settings)
     except AttributeError as e:
-        print(f"{e}")
+        print(f"ERROR: {e}")
 
 
 def run_once(

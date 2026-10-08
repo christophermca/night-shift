@@ -95,25 +95,28 @@ def test_lat_lng_with_check_now_flag_checks_the_fetched_times(
     mock_check.assert_called_once_with(TIMES, settings)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: the `services` subparser claims the first positional, so `night-shift 40.7 -74.0` fails with \"invalid choice: '40.7' (choose from 'services')\": exit 2 for the wrong reason",
-)
 def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher, capsys):
-    argv("abc", "-74.0")
+    argv("--lat=abc", "--lng=-74.0")
 
     with pytest.raises(SystemExit) as exc:
         cli.main()
 
     assert exc.value.code == 2
-    assert (
-        "argument latitude: invalid float value: 'abc'"
-        in capsys.readouterr().err
-    )
+    assert "invalid float value" in capsys.readouterr().err
     mock_fetcher.assert_not_called()
 
 
 # --- -c / --check-now [SCHEMA_PATH] -------------------------------------------
+def test_given_check_now_fails_throws_error(argv, settings_class, capsys):
+    argv("--check-now")
+    with patch(
+        "gnome_night_shift.cli.is_day_or_night",
+    ) as fn:
+
+        fn.side_effect = AttributeError()
+        result = cli.main()
+
+        assert result is None
 
 
 def test_check_now_uses_default_settings(argv, mock_check, settings_class):

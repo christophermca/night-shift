@@ -34,24 +34,22 @@ class GetTimeOfSunriseSunset:
 
         coords: tuple[float, float] | None
 
-        if self.use_geoclue is None:
+        # set coords
+        if self.use_geoclue is None and self.settings is not None:
             self.use_geoclue = self.settings.get("use-geoclue")
 
         if self.use_geoclue is True:
-            coords: tuple[float, float] = self._get_location()
-
+            print("qwe")
+            coords = self._get_location()
         else:
-            print(f"use_geoclue: {self.use_geoclue}")
-            coords: tuple[float, float] = (
-                self._get_static_location_from_settings()
-            )
+            coords = self._get_static_location_from_settings()
+        print(coords)
 
-        print(f"use coords, {coords}")
+        # set times
         if coords:
             self.times = self._get_sunrise_sunset(*coords, self.verbose)
-            print(f"coords{coords}")
-            print(f"times: {self.times}")
 
+    # pass coords from cli to module
     def __call__(self, coords, verbose=False):
         return self._get_sunrise_sunset(*coords, verbose)
 
@@ -105,12 +103,13 @@ class GetTimeOfSunriseSunset:
                     "last-known-coordinates"
                 )
                 try:
-                    print(previous_coordinates)
                     previous_coordinates
                 except Exception as e:
                     print(f"{e}")
 
+            # CHECK if should save?
             if self.override or (coords != previous_coordinates):
+                print("should save = True")
                 last_known_coordinates = GLib.Variant("(dd)", coords)
                 data: dict = {
                     "last-known-coordinates": last_known_coordinates,
@@ -175,12 +174,14 @@ class GetTimeOfSunriseSunset:
 
             self._save(saved)
 
+            print("times", times)
             return times
 
         except requests.exceptions.HTTPError as http_err:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
 
     def _save(self, data) -> None:
+        print(self.settings)
         if self.settings is None:
             print(
                 f"gnome-night-shift: unable to save {', '.join(data)}: self.settings unavailable",
@@ -199,7 +200,6 @@ class GetTimeOfSunriseSunset:
                     case int():
                         self.settings.set(key, value)
                     case _:
-                        print(f"case__{key}")
                         self.settings.set(key, value)
 
             if self.verbose > 0:

@@ -27,16 +27,15 @@ def is_day_or_night(
             )
 
         times = settings.get("times")
-    print(times)
 
     [sunrise, sunset] = times
     current_time = datetime.now().strftime("%H:%M")  # 24hr format
-    print("findme", current_time)
-    print(sunrise, sunset, current_time)
+    print("currently:", current_time)
 
     # check if currrent time is after sunrise or sunset
     DAY_NIGHT: str
 
+    print(sunrise, current_time, sunset)
     if sunrise <= current_time < sunset:
         DAY_NIGHT = "day"
     else:
@@ -45,6 +44,7 @@ def is_day_or_night(
     # set day-or-night
     print(f"save {DAY_NIGHT}")
     try:
+        # if settings is not None:
         settings.set("day-or-night", DAY_NIGHT)
     except Exception as e:
         print(f"Exception: {e}")
