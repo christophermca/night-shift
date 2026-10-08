@@ -81,7 +81,7 @@ def test_given_times_work_without_settings():
 
 
 @freeze_time("14:00")
-def test_uses_the_settings_it_is_given_in_day(settings_class):
+def test_uses_the_settings_it_is_given_in_day():
     TIMES = None
     settings = create_autospec(Settings, instance=True)
     settings.get.return_value = ("07:00", "20:00")
@@ -90,7 +90,7 @@ def test_uses_the_settings_it_is_given_in_day(settings_class):
 
 
 @freeze_time("21:00")
-def test_uses_the_settings_it_is_given_at_night(settings_class):
+def test_uses_the_settings_it_is_given_at_night():
     TIMES = None
     settings = create_autospec(Settings, instance=True)
     settings.get.return_value = ("07:00", "20:00")
