@@ -6,27 +6,33 @@ from gnome_night_shift.bin.settings import Settings
 from datetime import datetime
 
 
-def is_day_or_night(times=None, settings=None):
+def is_day_or_night(
+    times: tuple[str, str] | None = None, settings: Settings | None = None
+):
     """Work out "day" or "night" and save it.
 
     `times` is a (sunrise, sunset) pair of "HH:MM" strings. When it's not
-    given, the times saved in settings are used. `settings` is a `Settings`
-    to share with the caller; a new one is created when it's not given.
+    given, the times saved in settings are used.
+
+    `settings` is a `Settings`. When it's not given, raise an Error to the caller;
     """
-    print("is_day_or_night")
-    settings = (settings if settings is not None else Settings())()
+
+    print("\nIs it day or night? ...")
+    settings = settings
 
     if times is None:
         if settings is None:
-            print(
-                "gnome-night-shift: unable to check day or night: no saved sunrise/sunset times",
-                file=sys.stderr,
+            raise AttributeError(
+                "gnome-night-shift: unable to check `day or night`. settings is None"
             )
-            return None
-        times = settings.get_value("times")
+
+        times = settings.get("times")
+    print(times)
 
     [sunrise, sunset] = times
     current_time = datetime.now().strftime("%H:%M")  # 24hr format
+    print("findme", current_time)
+    print(sunrise, sunset, current_time)
 
     # check if currrent time is after sunrise or sunset
     DAY_NIGHT: str
@@ -37,13 +43,15 @@ def is_day_or_night(times=None, settings=None):
         DAY_NIGHT = "night"
 
     # set day-or-night
-    if settings is None:
+    print(f"save {DAY_NIGHT}")
+    try:
+        settings.set("day-or-night", DAY_NIGHT)
+    except Exception as e:
+        print(f"Exception: {e}")
         print(
             "gnome-night-shift: unable to save day-or-night: settings unavailable",
             file=sys.stderr,
         )
-    else:
-        settings.set_string("day-or-night", DAY_NIGHT)
 
     print(f"{DAY_NIGHT}time")
     return DAY_NIGHT
