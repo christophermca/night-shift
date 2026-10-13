@@ -7,6 +7,7 @@ import argparse
 import requests
 import subprocess
 import sys
+from collections import namedtuple
 from typing import Any
 from gnome_night_shift.bin.settings import Settings
 from datetime import datetime
@@ -39,7 +40,6 @@ class GetTimeOfSunriseSunset:
             self.use_geoclue = self.settings.get("use-geoclue")
 
         if self.use_geoclue is True:
-            print("qwe")
             coords = self._get_location()
         else:
             coords = self._get_static_location_from_settings()
@@ -74,28 +74,41 @@ class GetTimeOfSunriseSunset:
                 stdout=subprocess.PIPE,
             )
 
-            regex = r"^(Lat.*:|Long.*:).*([\.\-\d+]+)"
-            timestamp = r"^(Timestamp:).*([\.\-\d+]+)"
+            lat_regex = r"^(Lat.*:).*([\.\-\d+]+)"
+            lng_regex = r"^(Long.*:).*([\.\-\d+]+)"
 
             # READS response for LAT and LNG
-            arr = []
+            Coordinates = namedtuple("Coordinates", ["latitude", "longitude"])
+            found_coords: dict[str, float | None] = {
+                "lat": None,
+                "lng": None,
+            }
 
             for line in iter(geoclue_data.stdout.readline, ""):
-                match = re.match(regex, line)
+                print(f"line: {line}")
+                found_lat = re.match(lat_regex, line)
+                found_lng = re.match(lng_regex, line)
 
-                if match:
-                    matched_string = match.group().split()[1]
-                    arr.append(float(matched_string))
+                if found_lat:
+                    matched_string = found_lat.group().split()[1]
+                    found_coords["lat"] = float(matched_string)
 
-                if len(arr) == 2:
-                    geoclue_data.terminate()
+                if found_lng:
+                    matched_string = found_lng.group().split()[1]
+                    found_coords["lng"] = float(matched_string)
+
+                # attempt to exit early
+                if found_coords["lat"] and found_coords["lng"]:
                     break
 
-            if not arr:
+            geoclue_data.terminate()
+            # raise exception if unable to determine coords
+            if found_coords["lat"] is None and found_coords["lng"] is None:
                 raise TypeError(
                     "Could not determine location. Please check your geoclue configuration"
                 )
-            coords = tuple(arr)
+
+            coords = Coordinates(found_coords["lat"], found_coords["lng"])
 
             previous_coordinates = None
             if self.settings is not None:
@@ -108,12 +121,12 @@ class GetTimeOfSunriseSunset:
                     print(f"{e}")
 
             # CHECK if should save?
-            if self.override or (coords != previous_coordinates):
-                print("should save = True")
+            if self.override or (list(coords) != previous_coordinates):
                 last_known_coordinates = GLib.Variant("(dd)", coords)
                 data: dict = {
                     "last-known-coordinates": last_known_coordinates,
                 }
+                print("should save = True")
                 self._save(data)
             return coords
 

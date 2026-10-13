@@ -1,3 +1,4 @@
+import io
 import pytest
 from unittest.mock import Mock, patch, MagicMock, create_autospec
 import subprocess
@@ -6,9 +7,43 @@ from gi.repository import Gio, GLib
 from gnome_night_shift.bin.settings import Settings
 from gnome_night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 
+REAL_POPEN = subprocess.Popen
+AGENT_CMD = ["/usr/lib/geoclue-2.0/demos/agent"]
+WHERE_AM_I_CMD = [
+    "/usr/lib/geoclue-2.0/demos/where-am-i",
+    "--accuracy-level=8",
+    "--time-threshold=3",
+]
+
+# What geoclue's where-am-i actually prints (note the trailing degree signs).
+WHERE_AM_I_OUTPUT = """\
+Client object: /org/freedesktop/GeoClue2/Client/1
+New location:
+Latitude:    40.712800°
+Longitude:   -74.006000°
+Accuracy:    50.000000 meters
+Timestamp:   Mon 13 Oct 2026 09:00:00 AM EDT (1791896400 seconds since the Epoch)
+"""
+
+
+def fake_process(output=""):
+    """A Popen-shaped fake. Real Popen sets .stdout in __init__, so autospec
+    can't see it; give it a real text stream that returns "" at EOF."""
+    proc = create_autospec(REAL_POPEN, instance=True)
+    proc.stdout = io.StringIO(output)
+    return proc
+
 
 @pytest.fixture
-def settings():
+def popen():
+    with patch(
+        "gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen"
+    ) as popen:
+        yield popen
+
+
+@pytest.fixture
+def fake_settings():
     """A fake Settings backed by a dict: get() reads it, set() writes to it."""
     store = {
         "times": ("", ""),
@@ -22,6 +57,14 @@ def settings():
     mock_settings.store = store  # so tests can check what was saved
 
     return mock_settings
+
+
+@pytest.fixture
+def fetcher(fake_settings):
+    # With no settings, __init__ finds no static location and fetches nothing.
+    fetcher = GetTimeOfSunriseSunset()
+    fetcher.settings = fake_settings
+    return fetcher
 
 
 def _mock_response(payload):
@@ -117,14 +160,33 @@ class TestGetSunriseSunset:
 
         requests.return_value = _mock_response(API_PAYLOAD)
         # mock_get_location.return_value = (lat, lng)  # NYC coordinates
-        object = GetTimeOfSunriseSunset(
+        sunrise_sunset = GetTimeOfSunriseSunset(
             verbose=verbose,
             override=override,
             use_geoclue=use_geoclue,
             settings=self.settings,
         )
 
-        object(lat, lng)
+        sunrise_sunset([lat, lng])
+
+
+class TestGetSunriseSunsetGetLocation:
+    def _run(self, fetcher, popen, output=WHERE_AM_I_OUTPUT):
+        agent, where_am_i = fake_process(), fake_process(output)
+        popen.side_effect = [
+            agent,
+            where_am_i,
+        ]  # 1st Popen() = agent, 2nd = where-am-i
+
+        return fetcher._get_location(), agent, where_am_i
+
+    def test_starts_the_agent_then_where_am_i(self, fetcher, popen):
+        self._run(fetcher, popen)
+
+        assert [c.args[0] for c in popen.call_args_list] == [
+            AGENT_CMD,
+            WHERE_AM_I_CMD,
+        ]
 
 
 @patch(
@@ -134,7 +196,7 @@ class TestGetSunriseSunset:
 class TestSettingsIsSet:
 
     def test_when_geoclue_is_None_and_settings_is_set(
-        self, requests, mock_get_location, settings
+        self, requests, mock_get_location, fake_settings
     ):
         use_geoclue = None
         override = False
@@ -146,13 +208,13 @@ class TestSettingsIsSet:
             verbose=verbose,
             override=override,
             use_geoclue=use_geoclue,
-            settings=settings,
+            settings=fake_settings,
         )
 
         assert object.use_geoclue is False
 
         # fetched the times and saved them back to settings
-        assert settings.store["times"] == GLib.Variant(
+        assert fake_settings.store["times"] == GLib.Variant(
             "(ss)", ("06:52", "18:51")
         )
-        assert settings.store["tzid"] == "America/New_York"
+        assert fake_settings.store["tzid"] == "America/New_York"
