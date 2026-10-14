@@ -57,6 +57,12 @@ class DataStore:
             )
             self.data = None
 
+    def get_keys(self) -> list[str]:
+        if self.schema is None:
+            return []
+        else:
+            return sorted(self.schema.list_keys())
+
     def get(self, key: str):
         annotations = get_type_hints(Store)
 

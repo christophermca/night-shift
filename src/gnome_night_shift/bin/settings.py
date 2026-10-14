@@ -33,22 +33,16 @@ class Settings:
 
     @property
     def data(self):
-        print(self.data_store.keys())
+        print(self.data_store.data)
         return self.data_store.data
 
     @property
     def available(self) -> bool:
         return self.data_store.available
 
-    def get_keys(self):
-        print("START: gettings all keys\n\n")
-        try:
-            for key, value in self.data_store:
-                print(key, value)
-        except Exception as e:
-            print(f"SOMETHING BAD::: {e}")
-        finally:
-            print("END: gettings all keys\n")
+    @property
+    def get_keys(self) -> list[str]:
+        return self.data_store.get_keys()
 
     def get(self, key: str):
         try:

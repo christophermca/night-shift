@@ -1,3 +1,4 @@
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -43,7 +44,11 @@ def store(tmp_path):
 @pytest.mark.parametrize(
     "key, value, expected",
     [
-        ("times", GLib.Variant("(ss)", ("06:52", "18:51")), ("06:52", "18:51")),
+        (
+            "times",
+            GLib.Variant("(ss)", ("06:52", "18:51")),
+            ("06:52", "18:51"),
+        ),
         (
             "last-known-coordinates",
             GLib.Variant("(dd)", (40.7, -74.0)),
@@ -58,6 +63,12 @@ def test_set_saves_each_type(store, key, value, expected):
     store.set(key, value)
 
     assert store.data[key] == expected
+
+
+def test_get_keys_lists_every_key_in_the_schema(store):
+    xml_keys = re.findall(r'<key name="([^"]+)"', SCHEMA_XML.read_text())
+
+    assert store.get_keys() == sorted(xml_keys)
 
 
 def test_set_rejects_unsupported_types(store):

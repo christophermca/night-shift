@@ -1,5 +1,6 @@
 from unittest.mock import create_autospec, patch
 
+import re
 import pytest
 
 from gnome_night_shift.bin.settings import DEFAULT_SCHEMA_PATH, Settings
@@ -41,6 +42,18 @@ def test_set_writes_to_the_data_store(store):
     Settings(store).set("tzid", "America/New_York")
 
     store.set.assert_called_once_with("tzid", "America/New_York")
+
+
+def test_get_keys_from_data_store(store):
+    store.get_keys.return_value = ["times", "tzid"]
+
+    assert Settings(store).get_keys == ["times", "tzid"]
+
+    store.get_keys.assert_called_once()
+
+
+def test_get_keys_is_empty_without_a_schema(tmp_path, capsys):
+    assert DataStore(str(tmp_path)).get_keys() == []
 
 
 @pytest.mark.parametrize("available", [True, False])
