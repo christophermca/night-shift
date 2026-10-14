@@ -5,6 +5,8 @@ import subprocess
 import shutil
 from pathlib import Path
 
+WATCH_OPTION = "-w"
+
 
 class Services:
     def __init__(self, source_dir="", target_dir=""):
@@ -31,7 +33,6 @@ class Services:
             print(f"UNIT_PATH: {unit.name}, {source}")
             if unit.is_file():
                 try:
-                    source = source if source is not None else self.source_dir
                     src = f"{source}/{unit.name}"
                     target = f"{self.target_dir}/{unit.name}"
                     os.symlink(src, target)
@@ -46,13 +47,15 @@ class Services:
                     print("+++++")
                     print(f"SYMLINKED {unit.name}\n")
 
-    def _create_units(self, schema=None):
+    def _create_units(self, schema=None, tmp_dir=None):
         self.target_dir.mkdir(parents=True, exist_ok=True)
 
         # progromatically write systemd units vs copy/pasting
 
         if schema:
-            tmp_dir = Path(__file__).parent / "tmp"
+            tmp_dir = (
+                Path(tmp_dir) if tmp_dir else Path(__file__).parent / "tmp"
+            )
             tmp_dir.mkdir(parents=True, exist_ok=True)
 
             self._make_copy_of_unit(self.all_units, schema, tmp_dir)
@@ -137,8 +140,9 @@ class Services:
 
                         for i, line in enumerate(lines):
                             if line.startswith("ExecStart="):
-                                words = [line.strip(), schema_path]
-                                lines[i] = f"{line.rstrip()} {schema_path}\n"
+                                lines[i] = (
+                                    f"{line.rstrip()} {WATCH_OPTION} {schema_path}\n"
+                                )
 
                         with open(file_copy, "w") as file:
                             file.writelines(

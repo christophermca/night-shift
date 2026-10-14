@@ -195,9 +195,7 @@ def test_night_shift_services_setup_passes_schema_and_build_only(dirs):
 
 
 def test_make_copy_appends_schema_to_exec_start(dirs, tmp_path):
-    UNIT = (
-        "[Service]\nType=oneshot\nExecStart=/bin/night-shift -c\nRestart=no\n"
-    )
+    UNIT = "[Service]\nType=oneshot\nExecStart=/bin/night-shift\nRestart=no\n"
     source, target = dirs
     (source / "x.service").write_text(UNIT)
     out = tmp_path / "out"
@@ -207,6 +205,8 @@ def test_make_copy_appends_schema_to_exec_start(dirs, tmp_path):
         [source / "x.service"], "/x/schemas", out
     )
 
-    assert (out / "x.service").read_text() == UNIT.replace(
-        "-c\n", "-c /x/schemas\n"
+    assert (out / "x.service").read_text() == (
+        "[Service]\nType=oneshot\n"
+        "ExecStart=/bin/night-shift -w /x/schemas\n"
+        "Restart=no\n"
     )

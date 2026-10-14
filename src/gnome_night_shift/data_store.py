@@ -19,8 +19,6 @@ def _compile_schema(schema_path, schema_id):
         return schema
 
     except Exception as e:
-        import sys
-
         print(
             f"night-shift: settings unavailable, nothing will be saved ({e})",
             file=sys.stderr,
