@@ -1,3 +1,4 @@
+import sys
 import subprocess
 from gi.repository import Gio, GLib
 from typing import TypedDict, NotRequired, get_type_hints
@@ -41,15 +42,20 @@ class DataStore:
 
     def __init__(self, schema_path: str):
         self.data: GObject | Store | None = None
-        if schema_path == "DEFAULT":
-            pass
-            # TODO FEATURE handle DEFAULT
-            # self.data_path = default_config_file
-            # self.schema = None
-            # self.data = None
-        else:
+        try:
             self.schema = _compile_schema(schema_path, SCHEMA_ID)
-            self.data = Gio.Settings.new_full(self.schema, None, None)
+
+            if self.schema is not None:
+                self.data = Gio.Settings.new_full(self.schema, None, None)
+            else:
+                self.data = None
+
+        except Exception as e:
+            print(
+                f"night-shift: settings unavailable, nothing will be saved ({e})",
+                file=sys.stderr,
+            )
+            self.data = None
 
     def get(self, key: str):
         annotations = get_type_hints(Store)
