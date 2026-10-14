@@ -25,44 +25,43 @@ class Services:
         ]
 
     def _symlink(self, source: str | None = None):
-        try:
-            for unit in self.all_units:
-                print(f"UNIT_PATH: {unit.name}, {source}")
-                if unit.is_file():
-                    try:
-                        src = f"{source}/{unit.name}"
-                        target = f"{self.target_dir}/{unit.name}"
+        source = source if source is not None else self.source_dir
+        Path(self.target_dir).mkdir(parents=True, exist_ok=True)
+        for unit in self.all_units:
+            print(f"UNIT_PATH: {unit.name}, {source}")
+            if unit.is_file():
+                try:
+                    source = source if source is not None else self.source_dir
+                    src = f"{source}/{unit.name}"
+                    target = f"{self.target_dir}/{unit.name}"
+                    os.symlink(src, target)
+                except FileExistsError:
+                    if os.path.islink(target):
+                        print(f"is link, target:{target}, src: {unit.path}")
+                        os.remove(target)
                         os.symlink(src, target)
-                    except FileExistsError:
-                        if os.path.islink(target):
-                            print(
-                                f"is link, target:{target}, src: {unit.path}"
-                            )
-                            os.remove(target)
-                            os.symlink(src, target)
-                        else:
-                            print(f"skipping {unit.name} :: file exists")
-                    finally:
-                        print("+++++")
-                        print(f"SYMLINKED {unit.name}\n")
-        except Exception as e:
-            print(f"ERROR symlink: {e}")
+                    else:
+                        print(f"skipping {unit.name} :: file exists")
+                finally:
+                    print("+++++")
+                    print(f"SYMLINKED {unit.name}\n")
 
     def _create_units(self, schema=None):
-        # self.target_dir.mkdir(parents=True, exist_ok=True)
+        self.target_dir.mkdir(parents=True, exist_ok=True)
+
         # progromatically write systemd units vs copy/pasting
 
-        if self.schema_path:
+        if schema:
             tmp_dir = Path(__file__).parent / "tmp"
             tmp_dir.mkdir(parents=True, exist_ok=True)
 
-            self._make_copy_of_unit(self.all_units, self.schema_path, tmp_dir)
+            self._make_copy_of_unit(self.all_units, schema, tmp_dir)
 
             if any(tmp_dir.iterdir()):
                 self._symlink(tmp_dir)
 
         else:
-            self._symlink(source_dir)
+            self._symlink(self.source_dir)
 
     def _daemon_reload(self) -> None:
         try:
@@ -139,8 +138,7 @@ class Services:
                         for i, line in enumerate(lines):
                             if line.startswith("ExecStart="):
                                 words = [line.strip(), schema_path]
-                                _line = " ".join(words)
-                                lines[i] = _line
+                                lines[i] = f"{line.rstrip()} {schema_path}\n"
 
                         with open(file_copy, "w") as file:
                             file.writelines(
@@ -153,8 +151,8 @@ class Services:
     # PUBLIC API
     def setup(
         self,
-        build_only,
         schema_path=None,
+        build_only=False,
     ):
         self._create_units(schema_path)
         if build_only is False:

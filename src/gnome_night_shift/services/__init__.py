@@ -17,7 +17,7 @@ class NightShiftServices(Services):
         super().__init__(source_dir, target_dir)
 
     def setup(self, schema_path, build_only):
-        return super().setup(schema_path, build_only)
+        return super().setup(schema_path=schema_path, build_only=build_only)
 
     def start(self):
         super().start()
