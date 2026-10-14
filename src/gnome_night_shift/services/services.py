@@ -130,8 +130,7 @@ class Services:
         try:
             # TODO change tmp/ to a hiddle folder .tmp/
 
-            # make copy with changes to execStart
-            # save to tmp
+            # Makes copy with changes to EXECSTART then save to tmp folder
             for unit in units:
                 if unit.is_file():
                     file_copy = shutil.copy2(unit, save_to_path)
@@ -140,9 +139,14 @@ class Services:
 
                         for i, line in enumerate(lines):
                             if line.startswith("ExecStart="):
-                                lines[i] = (
-                                    f"{line.rstrip()} {WATCH_OPTION} {schema_path}\n"
+                                cmd = line.rstrip()
+                                # -c takes the schema path itself; -w never checks
+                                option = (
+                                    ""
+                                    if cmd.endswith(" -c")
+                                    else f" {WATCH_OPTION}"
                                 )
+                                lines[i] = f"{cmd}{option} {schema_path}\n"
 
                         with open(file_copy, "w") as file:
                             file.writelines(

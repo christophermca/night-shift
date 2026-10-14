@@ -11,15 +11,15 @@ import argparse
 import argcomplete
 
 
-def check(times=None, settings=None):
+def check(times=None, settings=None, verbose=0):
     try:
-        is_day_or_night(times, settings=settings)
+        is_day_or_night(times, settings, verbose)
     except AttributeError as e:
         print(f"ERROR: {e}")
 
 
 def run_once(
-    verbose: bool = False,
+    verbose: int = 0,
     override: bool = False,
     check_now: bool | str | None = False,
     use_geoclue: bool | None = False,
@@ -31,7 +31,7 @@ def run_once(
         )
         if check_now != False:
             try:
-                check(sunrise_sunset.times, settings)
+                check(sunrise_sunset.times, settings, verbose)
             except Exception as e:
                 print(f"check failed: {e}")
     except Exception as e:
@@ -104,8 +104,9 @@ def main():
     parser.add_argument(
         "-v",
         "--verbose",
-        action="store_true",
-        help="Prints all data",
+        action="count",
+        default=0,
+        help="Prints more information",
     )
 
     argcomplete.autocomplete(parser)
@@ -131,7 +132,13 @@ def main():
         settings = Settings(data_store)
 
         # TODO validate using run_once will work here.
-        run_once(args.verbose, args.override, args.check_now, None, settings)
+        run_once(
+            verbose=args.verbose,
+            override=args.override,
+            check_now=False,  # the watch option only gets the current location if location has changed for an OVERRIDE flag was passed
+            use_geoclue=None,  # watch will handle use settings
+            settings=settings,
+        )
 
     elif args.latitude != None and args.longitude != None:
         # One Settings per run, shared by everything below, so a missing schema is reported once. Only created on paths that need it.
@@ -142,7 +149,7 @@ def main():
         )
         times = sunrise_sunset(coords, args.verbose)
         if args.check_now != False:
-            return check(times, settings)
+            return check(times, settings, args.verbose)
 
     elif args.use_geoclue:
         settings = Settings()
@@ -159,9 +166,9 @@ def main():
         if type(args.check_now) is str:
             data_store = DataStore(args.check_now)
             settings = Settings(data_store)
-            return check(settings=settings)
+            return check(settings=settings, verbose=args.verbose)
 
-        check(settings=Settings())
+        check(settings=Settings(), verbose=args.verbose)
         return None
     else:
         parser.print_help()

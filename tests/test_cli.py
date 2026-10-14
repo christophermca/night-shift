@@ -3,7 +3,7 @@ import tomllib
 from pathlib import Path
 
 import pytest
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import gnome_night_shift
 from gnome_night_shift import cli
@@ -92,7 +92,7 @@ def test_lat_lng_with_check_now_flag_checks_the_fetched_times(
     settings = settings_class.return_value
 
     settings_class.assert_called_once_with()  # one Settings for the whole run
-    mock_check.assert_called_once_with(TIMES, settings)
+    mock_check.assert_called_once_with(TIMES, settings, 0)
 
 
 def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher, capsys):
@@ -124,7 +124,9 @@ def test_check_now_uses_default_settings(argv, mock_check, settings_class):
 
     result = cli.main()
 
-    mock_check.assert_called_once_with(settings=settings_class.return_value)
+    mock_check.assert_called_once_with(
+        settings=settings_class.return_value, verbose=0
+    )
     assert result is None
 
 
@@ -137,7 +139,9 @@ def test_check_now_with_schema_path_uses_that_data_store(
 
     data_store_class.assert_called_once_with("/path/to/schemas")
     settings_class.assert_called_once_with(data_store_class.return_value)
-    mock_check.assert_called_once_with(settings=settings_class.return_value)
+    mock_check.assert_called_once_with(
+        settings=settings_class.return_value, verbose=0
+    )
 
 
 # --- -g / --geoclue -----------------------------------------------------------
@@ -178,7 +182,7 @@ def test_geoclue_with_check_now_FLAG_checks_the_fetched_times(
 
     cli.main()
 
-    mock_check.assert_called_once_with(TIMES, settings_class.return_value)
+    mock_check.assert_called_once_with(TIMES, settings_class.return_value, 0)
 
 
 # --- -w / --watch [SCHEMA_PATH] -----------------------------------------------
@@ -196,16 +200,6 @@ def test_watch_with_schema_path_fetches_with_that_data_store(
     mock_fetcher.assert_called_once_with(
         0, False, None, settings_class.return_value
     )
-
-
-def test_watch_without_check_now_does_not_check(
-    argv, mock_fetcher, mock_check
-):
-    argv("--watch", "/path/to/schemas")
-
-    cli.main()
-
-    mock_check.assert_not_called()
 
 
 # --- services subcommands -------------------------------------------------------
@@ -265,20 +259,18 @@ def test_no_args_prints_help(argv, mock_fetcher, capsys):
 def test_check_passes_times_and_settings_through_and_returns_none():
     settings = object()
 
-    with patch(
-        "gnome_night_shift.cli.is_day_or_night", return_value="day"
-    ) as fn:
+    with patch("gnome_night_shift.cli.is_day_or_night", autospec=True) as fn:
         result = cli.check(TIMES, settings)
 
-    fn.assert_called_once_with(TIMES, settings=settings)
+    fn.assert_called_once_with(TIMES, settings, 0)
     assert result is None  # a string here would become exit status 1
 
 
 def test_check_without_times_uses_saved_times():
-    with patch("gnome_night_shift.cli.is_day_or_night") as fn:
+    with patch("gnome_night_shift.cli.is_day_or_night", autospec=True) as fn:
         cli.check()
 
-    fn.assert_called_once_with(None, settings=None)
+    fn.assert_called_once_with(None, None, 0)
 
 
 def test_run_once_shares_settings_with_fetch_and_check(
@@ -290,7 +282,7 @@ def test_run_once_shares_settings_with_fetch_and_check(
     cli.run_once(check_now=None, settings=settings)  # None: -c given, no path
 
     mock_fetcher.assert_called_once_with(False, False, False, settings)
-    mock_check.assert_called_once_with(TIMES, settings)
+    mock_check.assert_called_once_with(TIMES, settings, 0)
 
 
 def test_run_once_without_check_now_does_not_check(mock_fetcher, mock_check):
@@ -359,3 +351,44 @@ def test_unit_execstart_is_a_valid_command(
     assert (
         "usage:" not in capsys.readouterr().out
     ), f"{unit.name}: {args} only printed help, so the unit does nothing"
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--check-now"],
+        ["--check-now", "/path/to/schemas"],
+        ["--lat=40.7", "--lng=-74.0", "--check-now"],
+        ["-g", "--check-now"],
+    ],
+    ids=["-c", "-c PATH", "--lat --lng -c", "-g -c"],
+)
+def test_verbose_reaches_is_day_or_night(argv, mock_fetcher, args):
+    argv(*args, "-vv")
+    mock_fetcher.return_value.return_value = TIMES  # sunrise_sunset(coords)
+    mock_fetcher.return_value.times = TIMES  # run_once reads .times
+
+    with patch("gnome_night_shift.cli.is_day_or_night", autospec=True) as fn:
+        cli.main()
+
+    # autospec matches by signature, so this passes however check() spells the call
+    fn.assert_called_once_with(ANY, ANY, verbose=2)
+
+
+@pytest.mark.parametrize(
+    "args, checks",
+    [
+        (["--watch", "/path/to/schemas"], False),
+        (["--watch", "/path/to/schemas", "--check-now"], False),
+    ],
+    ids=["-w", "-w -c"],
+)
+def test_watch_DOESNOT_check_with_check_now(
+    argv, mock_fetcher, mock_check, args, checks
+):
+    argv(*args)
+    mock_fetcher.return_value.times = TIMES  # what a real fetch sets
+
+    cli.main()
+
+    assert mock_check.called is checks

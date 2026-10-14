@@ -93,3 +93,13 @@ def test_fetched_times_are_saved_through_settings(mock_get, store, capsys):
     assert "ERROR SAVING" not in capsys.readouterr().out
     assert store.data["times"] == ("06:52", "18:51")
     assert store.data["tzid"] == "America/New_York"
+
+
+def test_schema_id_picks_which_schema_to_load(tmp_path):
+    shutil.copy(SCHEMA_XML, tmp_path)
+    subprocess.run(["glib-compile-schemas", str(tmp_path)], check=True)
+    package_id = SCHEMA_XML.name.removesuffix(".gschema.xml")
+
+    store = DataStore(str(tmp_path), schema_id=package_id)
+
+    assert store.schema.get_id() == package_id

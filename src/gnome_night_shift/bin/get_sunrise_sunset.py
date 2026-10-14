@@ -43,14 +43,13 @@ class GetTimeOfSunriseSunset:
             coords = self._get_location()
         else:
             coords = self._get_static_location_from_settings()
-        print(coords)
 
         # set times
         if coords:
             self.times = self._get_sunrise_sunset(*coords, self.verbose)
 
     # pass coords from cli to module
-    def __call__(self, coords, verbose=False):
+    def __call__(self, coords, verbose=0):
         return self._get_sunrise_sunset(*coords, verbose)
 
     def _get_location(self) -> tuple[float, float]:
@@ -85,7 +84,6 @@ class GetTimeOfSunriseSunset:
             }
 
             for line in iter(geoclue_data.stdout.readline, ""):
-                print(f"line: {line}")
                 found_lat = re.match(lat_regex, line)
                 found_lng = re.match(lng_regex, line)
 
@@ -126,7 +124,6 @@ class GetTimeOfSunriseSunset:
                 data: dict = {
                     "last-known-coordinates": last_known_coordinates,
                 }
-                print("should save = True")
                 self._save(data)
             return coords
 
@@ -187,14 +184,12 @@ class GetTimeOfSunriseSunset:
 
             self._save(saved)
 
-            print("times", times)
             return times
 
         except requests.exceptions.HTTPError as http_err:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
 
     def _save(self, data) -> None:
-        print(self.settings)
         if self.settings is None:
             print(
                 f"gnome-night-shift: unable to save {', '.join(data)}: self.settings unavailable",

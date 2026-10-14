@@ -11,7 +11,7 @@ name = "gnome-night-shift"
 description = "Get Times of sunrise sunset for provided location"
 dependencies = ["requests>=2.28.0","pycairo","PyGObject" ]
 readme = "README.md"
-requires-python = ">=3.0"
+requires-python = ">=3.10"
 version = "0.3.0"
 
 [project.urls]
@@ -30,6 +30,10 @@ where = ["src"]
 
 dev = [
   "black", "locust"
+]
+
+test = [
+  "pytest", "pytest-cov", "freezegun"
 ]
 
 [tool.setuptools.package-data]

@@ -3,7 +3,6 @@ from pathlib import Path
 from gi.repository import Gio
 from gnome_night_shift.data_store import DataStore
 
-SCHEMA_ID = "org.gnome.shell.extensions.night-shift"
 DEFAULT_SCHEMA_PATH = os.path.expanduser(
     Path.home()
     / ".local"

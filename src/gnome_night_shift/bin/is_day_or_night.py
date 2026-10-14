@@ -7,7 +7,9 @@ from datetime import datetime
 
 
 def is_day_or_night(
-    times: tuple[str, str] | None = None, settings: Settings | None = None
+    times: tuple[str, str] | None = None,
+    settings: Settings | None = None,
+    verbose=0,
 ):
     """Work out "day" or "night" and save it.
 
@@ -17,7 +19,6 @@ def is_day_or_night(
     `settings` is a `Settings`. When it's not given, raise an Error to the caller;
     """
 
-    print("\nIs it day or night? ...")
     settings = settings
 
     if times is None:
@@ -30,28 +31,27 @@ def is_day_or_night(
 
     [sunrise, sunset] = times
     current_time = datetime.now().strftime("%H:%M")  # 24hr format
-    print("currently:", current_time)
 
     # check if currrent time is after sunrise or sunset
     DAY_NIGHT: str
 
-    print(sunrise, current_time, sunset)
+    if verbose >= 1:
+        print(sunrise, current_time, sunset)
+
     if sunrise <= current_time < sunset:
         DAY_NIGHT = "day"
     else:
         DAY_NIGHT = "night"
 
     # set day-or-night
-    print(f"save {DAY_NIGHT}")
     try:
         # if settings is not None:
         settings.set("day-or-night", DAY_NIGHT)
     except Exception as e:
-        print(f"Exception: {e}")
         print(
             "gnome-night-shift: unable to save day-or-night: settings unavailable",
             file=sys.stderr,
         )
 
-    print(f"{DAY_NIGHT}time")
+    print(f"{DAY_NIGHT}")
     return DAY_NIGHT
