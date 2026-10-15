@@ -1,42 +1,50 @@
-PROJECT_NAME:=gnome-night-shift
-PATH_TO_SCHEMA_FILE:="$(HOME)/.local/share"
-.PHONY: test
-test:
-	 virtualenv venv && \
-	. venv/bin/activate &&\
-	pip install -U pytest \
-	requests pycairo PyGObject &&\
-	python -m pytest tests -c pytest.ini
+PROJECT_NAME := gnome-night-shift
+SCHEMA_DIR   := src/gnome_night_shift/schemas
+VENV         := venv
+PYTHON       ?= python3
+PY           := $(VENV)/bin/python
 
-.PHONY: test
-test-nocov:
-	 virtualenv venv && \
-	. venv/bin/activate &&\
-	pip install -U pytest \
-	requests pycairo PyGObject &&\
-	python -m pytest tests -c pytest.ini --no-cov
+# Each recipe line runs in its own shell, so `. venv/bin/activate` can't carry
+# over to other targets. Call the venv's python directly instead.
+# --system-site-packages reuses the distro's PyGObject/pycairo (building them
+# with pip needs the C headers for cairo and gobject-introspection).
+$(PY):
+	$(PYTHON) -m venv --system-site-packages $(VENV)
+	$(PY) -m pip install -U pip
 
-build:
-	source venv/bin/activate &&\
-	python -m build
+.PHONY: dev test test-nocov build rebuild publish-testpypi install install-dev upgrade-dev compile-schema edit-schema
+
+dev: $(PY)
+	$(PY) -m pip install -e ".[test]"
+
+test: dev
+	$(PY) -m pytest -c pytest.ini
+
+test-nocov: dev
+	$(PY) -m pytest -c pytest.ini --no-cov
+
+build: $(PY)
+	$(PY) -m pip install -U build
+	$(PY) -m build
 
 rebuild:
-	rm -rf dist/ &&\
+	rm -rf dist/
 	$(MAKE) build
 
 publish-testpypi: rebuild
-	source venv/bin/activate &&\
-	twine upload --repository testpypi dist/*
+	$(PY) -m pip install -U twine
+	$(PY) -m twine upload --repository testpypi dist/*
 
 install:
 	python -m pip install --index-url https://test.pypi.org/simple/ $(PROJECT_NAME)
 
-install-dev:
-	python -m pip install -e .
+install-dev: dev
 
-comile-schema:
-	cd $(PATH_TO_SCHEMA_FILE) &&\
-	glib-compile-schemas .
+upgrade-dev: $(PY)
+	$(PY) -m pip install --upgrade .
+
+compile-schema:
+	glib-compile-schemas $(SCHEMA_DIR)
 
 edit-schema:
-	GSETTINGS_SCHEMA="$(PATH_TO_SCHEMA_FILE)" dconf-editor
+	GSETTINGS_SCHEMA_DIR="$(SCHEMA_DIR)" dconf-editor

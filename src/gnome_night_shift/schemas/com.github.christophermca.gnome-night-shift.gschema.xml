@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="com.github.christophermca.gnome-night-shift" path="/com/github/christophermca/gnome-night-shift">
+  <schema id="com.github.christophermca.gnome-night-shift" path="/com/github/christophermca/gnome-night-shift/">
     <key name="use-geoclue" type="b">
       <description>Use Geoclue to determine location</description>
       <default>true</default>

@@ -7,6 +7,21 @@ from gi.repository import GLib  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
+def _no_network(monkeypatch):
+    """Fail any test that would make a real HTTP request.
+
+    Tests that patch `...get_sunrise_sunset.requests.get` never reach this.
+    """
+
+    def refuse(*args, **kwargs):
+        raise RuntimeError(
+            "test tried to reach the network; patch requests.get"
+        )
+
+    monkeypatch.setattr("requests.sessions.Session.request", refuse)
+
+
+@pytest.fixture(autouse=True)
 def _patch_settings(mock_settings):
     with patch(
         "gnome_night_shift.bin.get_sunrise_sunset.Settings"

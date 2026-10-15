@@ -9,7 +9,7 @@
 import os
 import pytest
 from unittest.mock import patch, call
-from gnome_night_shift.services import Services
+from gnome_night_shift.services import Services, NightShiftServices
 
 UNITS = ["a.timer", "a.service", "b.timer"]
 
@@ -178,3 +178,35 @@ def test_destroy_disables_timers(dirs, mock_run):
         mock_run.assert_any_call(
             ["systemctl", "--user", "disable", "--now", timer], check=True
         )
+
+
+def test_night_shift_services_setup_passes_schema_and_build_only(dirs):
+
+    source, target = dirs
+    services = NightShiftServices(source, target)
+
+    with patch.object(Services, "_create_units") as create_units, patch.object(
+        Services, "start"
+    ) as start:
+        services.setup("/path/to/schemas", True)  # what cli.py passes
+
+    create_units.assert_called_once_with("/path/to/schemas")
+    start.assert_not_called()  # --build-only
+
+
+def test_make_copy_appends_schema_to_exec_start(dirs, tmp_path):
+    UNIT = "[Service]\nType=oneshot\nExecStart=/bin/night-shift\nRestart=no\n"
+    source, target = dirs
+    (source / "x.service").write_text(UNIT)
+    out = tmp_path / "out"
+    out.mkdir()
+
+    Services(source, target)._make_copy_of_unit(
+        [source / "x.service"], "/x/schemas", out
+    )
+
+    assert (out / "x.service").read_text() == (
+        "[Service]\nType=oneshot\n"
+        "ExecStart=/bin/night-shift -w /x/schemas\n"
+        "Restart=no\n"
+    )
