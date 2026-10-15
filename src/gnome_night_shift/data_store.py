@@ -40,13 +40,9 @@ class DataStore:
 
     def __init__(self, schema_path: str, schema_id: str = SCHEMA_ID):
         self.data: GObject | Store | None = None
-        self.schema: str | None = None
+        self.schema: Gio.SettingsSchema | None = None
 
         try:
-            if schema_id is None:
-                raise Exception(
-                    "Missing required argument `schema_path` and `schema_id`"
-                )
             self.schema = _compile_schema(schema_path, schema_id)
 
             if self.schema is not None:

@@ -392,3 +392,29 @@ def test_watch_DOESNOT_check_with_check_now(
     cli.main()
 
     assert mock_check.called is checks
+
+
+@pytest.mark.parametrize("unit", SERVICE_UNITS, ids=lambda p: p.name)
+def test_setup_with_schema_keeps_what_each_unit_does(
+    unit, tmp_path, argv, mock_fetcher, mock_check
+):
+    from gnome_night_shift.services import Services
+
+    mock_fetcher.return_value.times = TIMES
+
+    def runs_check(text):
+        exec_start = next(
+            l for l in text.splitlines() if l.startswith("ExecStart=")
+        )
+        argv(*shlex.split(exec_start.split("=", 1)[1])[1:])
+        mock_check.reset_mock()
+        cli.main()
+        return mock_check.called
+
+    Services(UNIT_DIR, tmp_path)._make_copy_of_unit(
+        [unit], "/x/schemas", tmp_path
+    )
+
+    assert runs_check((tmp_path / unit.name).read_text()) == runs_check(
+        unit.read_text()
+    )
