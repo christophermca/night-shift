@@ -3,11 +3,11 @@ import subprocess
 from gi.repository import Gio, GLib
 from typing import TypedDict, NotRequired, get_type_hints
 
-default_config_file = ".var/gnome-night-shift/data.json"
-SCHEMA_ID = "org.gnome.shell.extensions.night-shift"
+default_config_file = ".var/night-shift/data.json"
+DEFAULT_SCHEMA_ID = "com.github.christophermca.night-shift"
 
 
-def _compile_schema(schema_path, schema_id) -> str | None:
+def _compile_schema(schema_path, schema_id) -> Gio.SettingsSchema | None:
     try:
         schema_source = Gio.SettingsSchemaSource.new_from_directory(
             schema_path, Gio.SettingsSchemaSource.get_default(), False
@@ -38,7 +38,7 @@ class Store(TypedDict):
 
 class DataStore:
 
-    def __init__(self, schema_path: str, schema_id: str = SCHEMA_ID):
+    def __init__(self, schema_path: str, schema_id: str = DEFAULT_SCHEMA_ID):
         self.data: GObject | Store | None = None
         self.schema: Gio.SettingsSchema | None = None
 

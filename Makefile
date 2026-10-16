@@ -1,5 +1,5 @@
-PROJECT_NAME := gnome-night-shift
-SCHEMA_DIR   := src/gnome_night_shift/schemas
+PROJECT_NAME := night-shift
+SCHEMA_DIR   := src/night_shift/schemas
 VENV         := venv
 PYTHON       ?= python3
 PY           := $(VENV)/bin/python

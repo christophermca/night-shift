@@ -7,7 +7,7 @@ authors = [
   { name="Christopher McAdams", email="mca.christopher@gmail.com" }
 ]
 
-name = "gnome-night-shift"
+name = "night-shift"
 description = "Get Times of sunrise sunset for provided location"
 dependencies = ["requests>=2.28.0","pycairo","PyGObject" ]
 readme = "README.md"
@@ -18,7 +18,7 @@ version = "0.3.0"
 Homepage = "https://github.com/christophermca/night-shift"
 
 [project.scripts]
-night-shift = "gnome_night_shift:main"
+night-shift = "night_shift:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -37,7 +37,7 @@ test = [
 ]
 
 [tool.setuptools.package-data]
- "*" =  ["schemas/*.xml", "services/systemd/user/*.timer", "services/systemd/user/*.service"]
+ "night-shift.data" =  ["schemas/*.xml", "services/systemd/user/*.timer", "services/systemd/user/*.service"]
 
 classifiers = [
   "Programming Language :: Python :: 3",

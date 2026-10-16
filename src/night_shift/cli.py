@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # PYTHON_ARG_COMPLETE_OK
-from gnome_night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
-from gnome_night_shift.bin.is_day_or_night import is_day_or_night
-from gnome_night_shift.bin.settings import Settings
-from gnome_night_shift.services import NightShiftServices, setup_arguments
+from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
+from night_shift.bin.is_day_or_night import is_day_or_night
+from night_shift.bin.settings import Settings
+from night_shift.services import NightShiftServices, setup_arguments
 from .data_store import DataStore
 
 import sys
@@ -112,6 +112,7 @@ def main():
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
+    # ------------ Services
     if args.command == "services":
         night_shift_services = NightShiftServices()
         if args.subcommand == "setup":
@@ -123,6 +124,7 @@ def main():
         elif args.subcommand == "taredown":
             return night_shift_services.destroy()
 
+    # ------------ Watch
     if args.watch != False:
         if args.watch == None:
             args.watch = "DEFAULT"
@@ -132,7 +134,7 @@ def main():
         settings = Settings(data_store)
 
         # TODO validate using run_once will work here.
-        run_once(
+        return run_once(
             verbose=args.verbose,
             override=args.override,
             check_now=False,  # the watch option only gets the current location if location has changed for an OVERRIDE flag was passed
@@ -140,6 +142,7 @@ def main():
             settings=settings,
         )
 
+    # ------------ Static coordinates
     elif args.latitude != None and args.longitude != None:
         # One Settings per run, shared by everything below, so a missing schema is reported once. Only created on paths that need it.
         settings = Settings()
@@ -151,6 +154,7 @@ def main():
         if args.check_now != False:
             return check(times, settings, args.verbose)
 
+    # ------------ Using Geoclue
     elif args.use_geoclue:
         settings = Settings()
         return run_once(
@@ -162,13 +166,14 @@ def main():
         )
 
     elif args.check_now != False:
-        settings: Settings | None = None
+        settings: Settings
         if type(args.check_now) is str:
             data_store = DataStore(args.check_now)
             settings = Settings(data_store)
-            return check(settings=settings, verbose=args.verbose)
+        else:
+            settings = Settings()
 
-        check(settings=Settings(), verbose=args.verbose)
+        check(settings=settings, verbose=args.verbose)
         return None
     else:
         parser.print_help()

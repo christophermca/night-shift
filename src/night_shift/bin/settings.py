@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from gi.repository import Gio
-from gnome_night_shift.data_store import DataStore
+from night_shift.data_store import DataStore
 
 DEFAULT_SCHEMA_PATH = os.path.expanduser(
     Path.home()

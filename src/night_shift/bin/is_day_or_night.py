@@ -2,7 +2,7 @@
 
 import sys
 
-from gnome_night_shift.bin.settings import Settings
+from night_shift.bin.settings import Settings
 from datetime import datetime
 
 
@@ -24,7 +24,7 @@ def is_day_or_night(
     if times is None:
         if settings is None:
             raise AttributeError(
-                "gnome-night-shift: unable to check `day or night`. settings is None"
+                "night-shift: unable to check `day or night`. settings is None"
             )
 
         times = settings.get("times")
@@ -49,7 +49,7 @@ def is_day_or_night(
         settings.set("day-or-night", DAY_NIGHT)
     except Exception as e:
         print(
-            "gnome-night-shift: unable to save day-or-night: settings unavailable",
+            "night-shift: unable to save day-or-night: settings unavailable",
             file=sys.stderr,
         )
 

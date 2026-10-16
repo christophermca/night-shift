@@ -2,6 +2,7 @@
 
 import re
 import gi
+import pprint
 import json
 import argparse
 import requests
@@ -9,7 +10,7 @@ import subprocess
 import sys
 from collections import namedtuple
 from typing import Any
-from gnome_night_shift.bin.settings import Settings
+from night_shift.bin.settings import Settings
 from datetime import datetime
 
 gi.require_version("Gio", "2.0")
@@ -157,11 +158,11 @@ class GetTimeOfSunriseSunset:
 
             response_data = response.json()
 
-            if self.verbose:
+            if self.verbose > 1:
                 json_string = json.dumps(
                     response_data, indent=4, sort_keys=True
                 )
-                print(f"[gnome-night-shift] {json_string}")
+                print(f"[night-shift] {json_string}")
 
             tzid = response_data["tzid"]
             sunrise = datetime.fromisoformat(
@@ -186,16 +187,16 @@ class GetTimeOfSunriseSunset:
 
             return times
 
+        except Exception as e:
+            print(f" Generic: {e}")
         except requests.exceptions.HTTPError as http_err:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
 
     def _save(self, data) -> None:
         if self.settings is None:
-            print(
-                f"gnome-night-shift: unable to save {', '.join(data)}: self.settings unavailable",
-                file=sys.stderr,
+            raise (
+                f"night-shift: unable to save {', '.join(data)}: self.settings unavailable",
             )
-            return
 
         try:
             for key, value in data.items():
@@ -211,17 +212,16 @@ class GetTimeOfSunriseSunset:
                         self.settings.set(key, value)
 
             if self.verbose > 0:
-                print(f"{data}")
+                pprint.pprint(data)
 
         except Exception as e:
             print(f"ERROR SAVING {e}")
-            print(f"{data}")
 
     def _get_static_location_from_settings(self) -> tuple[float, float]:
 
         if self.settings is None:
             print(
-                "gnome-night-shift: no static location: self.settings unavailable",
+                "night-shift: no static location: self.settings unavailable",
                 file=sys.stderr,
             )
             return None

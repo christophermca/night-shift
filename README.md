@@ -1,4 +1,4 @@
-# GNOME Night Shift
+# Night Shift
 
 Night Shift will lookup the time of the sunrise and sunset for the provided location.
 
@@ -19,8 +19,7 @@ Next **Night shift** will determine the time for sunrise and sunset.
 Then **Night Shift** will attempt to create a Gsettings Object to store the data.
 
 ## Requirements
-
-* GNOME
+python = ">=3.10"
 
 
 ## Installation
@@ -28,7 +27,7 @@ Then **Night Shift** will attempt to create a Gsettings Object to store the data
 ### PIP
 
 ```bash
-pip install gnome-night-shift
+pip install night-shift
 ```
 
 ## Usage
