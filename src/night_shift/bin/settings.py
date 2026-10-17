@@ -46,8 +46,9 @@ class Settings:
     def get(self, key: str):
         try:
             return self.data_store.get(key)
+
         except AttributeError as e:
-            print(f"Error: Failed to GET key:`{key}`\nMessage:: {e}")
+            print(f"Error: Failed to GET key:`{key}`")
 
     def set(self, key, value):
         self.data_store.set(key, value)

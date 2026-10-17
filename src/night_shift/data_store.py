@@ -64,6 +64,9 @@ class DataStore:
             return sorted(self.schema.list_keys())
 
     def get(self, key: str):
+        if self.data is None:
+            return None
+
         annotations = get_type_hints(Store)
 
         norm_key = key.replace("-", "_")
@@ -84,6 +87,10 @@ class DataStore:
                 return value
 
     def set(self, key: str, value):
+        if self.data is None:
+            raise AttributeError("`data` is None")
+            return None
+
         match value:
             case bool():  # bool must go before int: bool is a subclass of int
                 self.data.set_boolean(key, value)
