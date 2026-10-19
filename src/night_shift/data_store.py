@@ -9,6 +9,7 @@ DEFAULT_SCHEMA_ID = "com.github.christophermca.night-shift"
 
 def _compile_schema(schema_path, schema_id) -> Gio.SettingsSchema | None:
     try:
+        print("here")
         schema_source = Gio.SettingsSchemaSource.new_from_directory(
             schema_path, Gio.SettingsSchemaSource.get_default(), False
         )
@@ -25,7 +26,7 @@ def _compile_schema(schema_path, schema_id) -> Gio.SettingsSchema | None:
         )
 
 
-class Store(TypedDict):
+class TypedStore(TypedDict):
     day_or_night: str
     last_known_coordinates: tuple[float, float]
     static_latitude: str
@@ -38,12 +39,20 @@ class Store(TypedDict):
 
 class DataStore:
 
-    def __init__(self, schema_path: str, schema_id: str = DEFAULT_SCHEMA_ID):
-        self.data: GObject | Store | None = None
+    def __init__(self, schema_path: str):
+        self.data: GObject | TypedStore | None = None
         self.schema: Gio.SettingsSchema | None = None
+        self.schema_path = schema_path
 
         try:
-            self.schema = _compile_schema(schema_path, schema_id)
+            print("findme", self.schema_path)
+            SCHEMA_XML = (Path(night_shift.__file__).parent / "schemas").glob(
+                "*.gschema.xml"
+            )
+            print("HERE", SCHEMA_XML)
+            package_id = schema_path.name.removesuffix(".gschema.xml")
+            self.schema = _compile_schema(schema_path, schema_id=package_id)
+            print(f"pkg_id{package_id}, self.schema: {self.schema}")
 
             if self.schema is not None:
                 self.data = Gio.Settings.new_full(self.schema, None, None)
@@ -67,7 +76,7 @@ class DataStore:
         if self.data is None:
             return None
 
-        annotations = get_type_hints(Store)
+        annotations = get_type_hints(TypedStore)
 
         norm_key = key.replace("-", "_")
         value = annotations.get(norm_key)()

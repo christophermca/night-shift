@@ -9,7 +9,7 @@
 import os
 import pytest
 from unittest.mock import patch, call
-from gnome_night_shift.services import Services, NightShiftServices
+from night_shift.services import Services, NightShiftServices
 
 UNITS = ["a.timer", "a.service", "b.timer"]
 

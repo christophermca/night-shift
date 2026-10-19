@@ -3,14 +3,14 @@ import pytest
 
 from freezegun import freeze_time
 from unittest.mock import patch, MagicMock, create_autospec
-from gnome_night_shift.bin.settings import Settings
-from gnome_night_shift.bin.is_day_or_night import is_day_or_night
+from night_shift.bin.settings import Settings
+from night_shift.bin.is_day_or_night import is_day_or_night
 
 
 @pytest.fixture(autouse=True)
 def settings_class():
     """main() builds one Settings per run; fake it so no test touches GSettings."""
-    with patch("gnome_night_shift.cli.Settings") as settings_class:
+    with patch("night_shift.cli.Settings") as settings_class:
         yield settings_class
 
 

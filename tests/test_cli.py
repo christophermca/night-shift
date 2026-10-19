@@ -5,12 +5,10 @@ from pathlib import Path
 import pytest
 from unittest.mock import ANY, patch
 
-import gnome_night_shift
-from gnome_night_shift import cli
+import night_shift
+from night_shift import cli
 
-UNIT_DIR = (
-    Path(gnome_night_shift.__file__).parent / "services" / "systemd" / "user"
-)
+UNIT_DIR = Path(night_shift.__file__).parent / "services" / "systemd" / "user"
 SERVICE_UNITS = sorted(UNIT_DIR.glob("*.service"))
 PYPROJECT = Path(__file__).parents[1] / "pyproject.toml"
 TIMES = ("06:52", "18:51")
@@ -27,34 +25,34 @@ def argv(monkeypatch):
 @pytest.fixture
 def mock_fetcher():
     with patch(
-        "gnome_night_shift.cli.GetTimeOfSunriseSunset", autospec=True
+        "night_shift.cli.GetTimeOfSunriseSunset", autospec=True
     ) as fetcher:
         yield fetcher
 
 
 @pytest.fixture
 def mock_check():
-    with patch("gnome_night_shift.cli.check") as check:
+    with patch("night_shift.cli.check") as check:
         yield check
 
 
 @pytest.fixture(autouse=True)
 def settings_class():
     """main() builds one Settings per run; fake it so no test touches GSettings."""
-    with patch("gnome_night_shift.cli.Settings") as settings_class:
+    with patch("night_shift.cli.Settings") as settings_class:
         yield settings_class
 
 
 @pytest.fixture(autouse=True)
 def data_store_class():
     """-w / -c SCHEMA_PATH build a DataStore; fake it so no schema is compiled."""
-    with patch("gnome_night_shift.cli.DataStore") as data_store_class:
+    with patch("night_shift.cli.DataStore") as data_store_class:
         yield data_store_class
 
 
 @pytest.fixture
 def services_class():
-    with patch("gnome_night_shift.cli.NightShiftServices") as services_class:
+    with patch("night_shift.cli.NightShiftServices") as services_class:
         yield services_class
 
 
@@ -110,7 +108,7 @@ def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher, capsys):
 def test_given_check_now_fails_throws_error(argv, settings_class, capsys):
     argv("--check-now")
     with patch(
-        "gnome_night_shift.cli.is_day_or_night",
+        "night_shift.cli.is_day_or_night",
     ) as fn:
 
         fn.side_effect = AttributeError()
@@ -259,7 +257,7 @@ def test_no_args_prints_help(argv, mock_fetcher, capsys):
 def test_check_passes_times_and_settings_through_and_returns_none():
     settings = object()
 
-    with patch("gnome_night_shift.cli.is_day_or_night", autospec=True) as fn:
+    with patch("night_shift.cli.is_day_or_night", autospec=True) as fn:
         result = cli.check(TIMES, settings)
 
     fn.assert_called_once_with(TIMES, settings, 0)
@@ -267,7 +265,7 @@ def test_check_passes_times_and_settings_through_and_returns_none():
 
 
 def test_check_without_times_uses_saved_times():
-    with patch("gnome_night_shift.cli.is_day_or_night", autospec=True) as fn:
+    with patch("night_shift.cli.is_day_or_night", autospec=True) as fn:
         cli.check()
 
     fn.assert_called_once_with(None, None, 0)
@@ -303,7 +301,7 @@ def test_run_once_catches_check_errors(mock_fetcher, capsys):
     mock_fetcher.return_value.times = ("06:52", "18:51")
 
     with patch(
-        "gnome_night_shift.cli.check", side_effect=AttributeError("no schema")
+        "night_shift.cli.check", side_effect=AttributeError("no schema")
     ) as check:
         cli.run_once(check_now=None)
 
@@ -368,7 +366,7 @@ def test_verbose_reaches_is_day_or_night(argv, mock_fetcher, args):
     mock_fetcher.return_value.return_value = TIMES  # sunrise_sunset(coords)
     mock_fetcher.return_value.times = TIMES  # run_once reads .times
 
-    with patch("gnome_night_shift.cli.is_day_or_night", autospec=True) as fn:
+    with patch("night_shift.cli.is_day_or_night", autospec=True) as fn:
         cli.main()
 
     # autospec matches by signature, so this passes however check() spells the call
@@ -398,7 +396,7 @@ def test_watch_DOESNOT_check_with_check_now(
 def test_setup_with_schema_keeps_what_each_unit_does(
     unit, tmp_path, argv, mock_fetcher, mock_check
 ):
-    from gnome_night_shift.services import Services
+    from night_shift.services import Services
 
     mock_fetcher.return_value.times = TIMES
 

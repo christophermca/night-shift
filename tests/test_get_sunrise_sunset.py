@@ -4,8 +4,8 @@ from unittest.mock import Mock, patch, MagicMock, create_autospec
 import subprocess
 import requests
 from gi.repository import Gio, GLib
-from gnome_night_shift.bin.settings import Settings
-from gnome_night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
+from night_shift.bin.settings import Settings
+from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 
 REAL_POPEN = subprocess.Popen
 AGENT_CMD = ["/usr/lib/geoclue-2.0/demos/agent"]
@@ -36,9 +36,7 @@ def fake_process(output=""):
 
 @pytest.fixture
 def popen():
-    with patch(
-        "gnome_night_shift.bin.get_sunrise_sunset.subprocess.Popen"
-    ) as popen:
+    with patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen") as popen:
         yield popen
 
 
@@ -82,9 +80,9 @@ API_PAYLOAD = {
 
 
 @patch(
-    "gnome_night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
+    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
 )
-@patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
+@patch("night_shift.bin.get_sunrise_sunset.requests.get")
 class TestGetSunriseSunset:
     settings = None
 
@@ -190,9 +188,9 @@ class TestGetSunriseSunsetGetLocation:
 
 
 @patch(
-    "gnome_night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
+    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
 )
-@patch("gnome_night_shift.bin.get_sunrise_sunset.requests.get")
+@patch("night_shift.bin.get_sunrise_sunset.requests.get")
 class TestSettingsIsSet:
 
     def test_when_geoclue_is_None_and_settings_is_set(
