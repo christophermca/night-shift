@@ -32,7 +32,6 @@ class Settings:
 
     @property
     def data(self):
-        print(self.data_store.data)
         return self.data_store.data
 
     @property

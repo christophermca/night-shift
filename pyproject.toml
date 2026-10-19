@@ -37,7 +37,9 @@ test = [
 ]
 
 [tool.setuptools.package-data]
- "night-shift.data" =  ["schemas/*.xml", "services/systemd/user/*.timer", "services/systemd/user/*.service"]
+"night_shift" =  [
+  "schemas/*.xml", "services/systemd/user/*.timer", "services/systemd/user/*.service"
+]
 
 classifiers = [
   "Programming Language :: Python :: 3",

@@ -126,12 +126,9 @@ def main():
 
     # ------------ Watch
     if args.watch != False:
-        if args.watch == None:
-            args.watch = "DEFAULT"
-
-        # use a data_store
-        data_store = DataStore(args.watch)
-        settings = Settings(data_store)
+        settings = (
+            Settings(DataStore(args.watch)) if args.watch else Settings()
+        )
 
         # TODO validate using run_once will work here.
         return run_once(

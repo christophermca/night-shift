@@ -54,6 +54,8 @@ class GetTimeOfSunriseSunset:
         else:
             coords = self._get_static_location_from_settings()
 
+        return coords
+
     def _get_location(self) -> tuple[float, float]:
         try:
 
@@ -188,10 +190,12 @@ class GetTimeOfSunriseSunset:
 
             return times
 
-        except Exception as e:
-            print(f" Generic: {e}")
         except requests.exceptions.HTTPError as http_err:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
+        except (
+            Exception
+        ) as e:  # Generic Exception must go last becuase it will catch any exception
+            print(f" Generic: {e}")
 
     def _save(self, data) -> None:
         # if self.settings is None:
@@ -202,24 +206,19 @@ class GetTimeOfSunriseSunset:
         #     raise AttributeError("data is None")
         #     return None
         try:
-            if self.settings is not Settings:
-                # fallback and print data
-                pprint.pprint(data)
-                return
-            else:
-                for key, value in data.items():
-                    match value:
-                        case str():
-                            self.settings.set(key, value)
-                        case bool():
-                            self.settings.set(key, value)
-                        case int():
-                            self.settings.set(key, value)
-                        case _:
-                            self.settings.set(key, value)
+            for key, value in data.items():
+                match value:
+                    case str():
+                        self.settings.set(key, value)
+                    case bool():
+                        self.settings.set(key, value)
+                    case int():
+                        self.settings.set(key, value)
+                    case _:
+                        self.settings.set(key, value)
 
-                if self.verbose > 0:
-                    pprint.pprint(data)
+            if self.verbose > 0:
+                pprint.pprint(data)
 
         except Exception as e:
             print(f"ERROR SAVING: {e}")

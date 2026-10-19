@@ -22,10 +22,7 @@ def is_day_or_night(
     settings = settings
 
     if times is None:
-        print("here")
-        print(settings)
         if settings is None:
-            print("there")
             raise AttributeError(
                 "night-shift: unable to check `day or night`. settings is None"
             )

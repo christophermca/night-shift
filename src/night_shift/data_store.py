@@ -1,15 +1,14 @@
 import sys
 import subprocess
+from pathlib import Path
 from gi.repository import Gio, GLib
 from typing import TypedDict, NotRequired, get_type_hints
 
 default_config_file = ".var/night-shift/data.json"
-DEFAULT_SCHEMA_ID = "com.github.christophermca.night-shift"
 
 
 def _compile_schema(schema_path, schema_id) -> Gio.SettingsSchema | None:
     try:
-        print("here")
         schema_source = Gio.SettingsSchemaSource.new_from_directory(
             schema_path, Gio.SettingsSchemaSource.get_default(), False
         )
@@ -41,18 +40,16 @@ class DataStore:
 
     def __init__(self, schema_path: str):
         self.data: GObject | TypedStore | None = None
-        self.schema: Gio.SettingsSchema | None = None
         self.schema_path = schema_path
 
+        self.schema: Gio.SettingsSchema | None = None
+
         try:
-            print("findme", self.schema_path)
-            SCHEMA_XML = (Path(night_shift.__file__).parent / "schemas").glob(
-                "*.gschema.xml"
+            schema_xml = next(Path(self.schema_path).glob("*.gschema.xml"))
+            package_id = schema_xml.name.removesuffix(".gschema.xml")
+            self.schema = _compile_schema(
+                self.schema_path, schema_id=package_id
             )
-            print("HERE", SCHEMA_XML)
-            package_id = schema_path.name.removesuffix(".gschema.xml")
-            self.schema = _compile_schema(schema_path, schema_id=package_id)
-            print(f"pkg_id{package_id}, self.schema: {self.schema}")
 
             if self.schema is not None:
                 self.data = Gio.Settings.new_full(self.schema, None, None)

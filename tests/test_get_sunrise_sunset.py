@@ -210,11 +210,21 @@ class TestSettingsIsSet:
             settings=fake_settings,
         )
 
+        print("myobject", object.times)
         assert object.use_geoclue is False
 
         # fetched the times and saved them back to settings
-        print("HELLO", fake_settings.data_store.get("times"))
         assert fake_settings.data_store["times"] == GLib.Variant(
             "(ss)", ("06:52", "18:51")
         )
         assert fake_settings.data_store["tzid"] == "America/New_York"
+
+
+@patch("night_shift.bin.get_sunrise_sunset.requests.get")
+def test_http_errors_are_reported_as_http_errors(mock_get, fetcher, capsys):
+    mock_get.return_value.raise_for_status.side_effect = (
+        requests.exceptions.HTTPError("500 Server Error")
+    )
+
+    assert fetcher._get_sunrise_sunset(40.7, -74.0, 0) is None
+    assert "HTTP error occurred" in capsys.readouterr().out
