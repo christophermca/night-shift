@@ -34,24 +34,25 @@ class GetTimeOfSunriseSunset:
         self.agent = None
         self.times: tuple[str, str] | None = None
 
-        coords: tuple[float, float] | None
+        # Determine Time of sunrise/sunset
+        coords: tuple[float, float] | None = self.determine_location()
 
-        # set coords
-        if self.use_geoclue is None and self.settings is not None:
-            self.use_geoclue = self.settings.get("use-geoclue")
-
-        if self.use_geoclue is True:
-            coords = self._get_location()
-        else:
-            coords = self._get_static_location_from_settings()
-
-        # set times
         if coords:
             self.times = self._get_sunrise_sunset(*coords, self.verbose)
 
     # pass coords from cli to module
     def __call__(self, coords, verbose=0):
         return self._get_sunrise_sunset(*coords, verbose)
+
+    def determine_location(self) -> tuple[float, float] | None:
+        if self.use_geoclue is None and self.settings is not None:
+            self.use_geoclue = self.settings.get("use-geoclue")
+
+        # Determine Location
+        if self.use_geoclue is True:
+            coords = self._get_location()
+        else:
+            coords = self._get_static_location_from_settings()
 
     def _get_location(self) -> tuple[float, float]:
         try:

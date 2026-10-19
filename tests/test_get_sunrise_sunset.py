@@ -52,7 +52,8 @@ def fake_settings():
     mock_settings = create_autospec(Settings, instance=True)
     mock_settings.get.side_effect = store.get
     mock_settings.set.side_effect = store.__setitem__
-    mock_settings.store = store  # so tests can check what was saved
+    print("mock_store_defaults: ", store)
+    mock_settings.data_store = store  # so tests can check what was saved
 
     return mock_settings
 
@@ -212,7 +213,8 @@ class TestSettingsIsSet:
         assert object.use_geoclue is False
 
         # fetched the times and saved them back to settings
-        assert fake_settings.store["times"] == GLib.Variant(
+        print("HELLO", fake_settings.data_store.get("times"))
+        assert fake_settings.data_store["times"] == GLib.Variant(
             "(ss)", ("06:52", "18:51")
         )
-        assert fake_settings.store["tzid"] == "America/New_York"
+        assert fake_settings.data_store["tzid"] == "America/New_York"
