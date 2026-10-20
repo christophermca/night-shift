@@ -2,13 +2,15 @@
 
 import re
 import gi
+import pprint
 import json
 import argparse
 import requests
 import subprocess
 import sys
+from collections import namedtuple
 from typing import Any
-from gnome_night_shift.bin.settings import Settings
+from night_shift.bin.settings import Settings
 from datetime import datetime
 
 gi.require_version("Gio", "2.0")
@@ -20,34 +22,39 @@ NOAA = "https://api.sunrise-sunset.org/v2"
 class GetTimeOfSunriseSunset:
     def __init__(
         self,
-        verbose: bool = False,
+        verbose: int = 0,
         override: bool = False,
-        use_geoclue: bool = False,
+        use_geoclue: bool | None = False,
         settings: Settings | None = None,
     ):
         self.override = override
         self.verbose = verbose
         self.use_geoclue = use_geoclue
-        self.settings = settings if settings is not None else Settings()
+        self.settings = settings
         self.agent = None
         self.times: tuple[str, str] | None = None
 
-        coords: tuple[float, float] | None
-
-        print(f"use geoclue: {self.use_geoclue}")
-        if not self.use_geoclue:
-            coords: tuple[float, float] = (
-                self._get_static_location_from_settings()
-            )
-        else:
-            coords: tuple[float, float] = self._get_location()
+        # Determine Time of sunrise/sunset
+        coords: tuple[float, float] | None = self.determine_location()
 
         if coords:
-            print(f"coords: {coords}")
             self.times = self._get_sunrise_sunset(*coords, self.verbose)
 
-    def __call__(self, coords, verbose=False):
+    # pass coords from cli to module
+    def __call__(self, coords, verbose=0):
         return self._get_sunrise_sunset(*coords, verbose)
+
+    def determine_location(self) -> tuple[float, float] | None:
+        if self.use_geoclue is None and self.settings is not None:
+            self.use_geoclue = self.settings.get("use-geoclue")
+
+        # Determine Location
+        if self.use_geoclue is True:
+            coords = self._get_location()
+        else:
+            coords = self._get_static_location_from_settings()
+
+        return coords
 
     def _get_location(self) -> tuple[float, float]:
         try:
@@ -70,37 +77,53 @@ class GetTimeOfSunriseSunset:
                 stdout=subprocess.PIPE,
             )
 
-            regex = r"^(Lat.*:|Long.*:).*([\.\-\d+]+)"
-            timestamp = r"^(Timestamp:).*([\.\-\d+]+)"
+            lat_regex = r"^(Lat.*:).*([\.\-\d+]+)"
+            lng_regex = r"^(Long.*:).*([\.\-\d+]+)"
 
             # READS response for LAT and LNG
-            arr = []
+            Coordinates = namedtuple("Coordinates", ["latitude", "longitude"])
+            found_coords: dict[str, float | None] = {
+                "lat": None,
+                "lng": None,
+            }
 
             for line in iter(geoclue_data.stdout.readline, ""):
-                match = re.match(regex, line)
+                found_lat = re.match(lat_regex, line)
+                found_lng = re.match(lng_regex, line)
 
-                if match:
-                    matched_string = match.group().split()[1]
-                    arr.append(float(matched_string))
+                if found_lat:
+                    matched_string = found_lat.group().split()[1]
+                    found_coords["lat"] = float(matched_string)
 
-                if len(arr) == 2:
-                    geoclue_data.terminate()
+                if found_lng:
+                    matched_string = found_lng.group().split()[1]
+                    found_coords["lng"] = float(matched_string)
+
+                # attempt to exit early
+                if found_coords["lat"] and found_coords["lng"]:
                     break
 
-            if not arr:
+            geoclue_data.terminate()
+            # raise exception if unable to determine coords
+            if found_coords["lat"] is None and found_coords["lng"] is None:
                 raise TypeError(
                     "Could not determine location. Please check your geoclue configuration"
                 )
-            coords = tuple(arr)
 
-            settings = self.settings()
+            coords = Coordinates(found_coords["lat"], found_coords["lng"])
+
             previous_coordinates = None
-            if settings is not None:
-                previous_coordinates = settings.get_value(
+            if self.settings is not None:
+                previous_coordinates = self.settings.get(
                     "last-known-coordinates"
-                ).unpack()
+                )
+                try:
+                    previous_coordinates
+                except Exception as e:
+                    print(f"{e}")
 
-            if self.override or (coords != previous_coordinates):
+            # CHECK if should save?
+            if self.override or (list(coords) != previous_coordinates):
                 last_known_coordinates = GLib.Variant("(dd)", coords)
                 data: dict = {
                     "last-known-coordinates": last_known_coordinates,
@@ -124,10 +147,10 @@ class GetTimeOfSunriseSunset:
                     self.agent = None
 
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"Error: ___{e}")
 
     def _get_sunrise_sunset(
-        self, lat: float, lng: float, verbose: bool
+        self, lat: float, lng: float, verbose: int
     ) -> tuple[float, float]:
         try:
             params = {"lat": lat, "lng": lng}
@@ -138,11 +161,11 @@ class GetTimeOfSunriseSunset:
 
             response_data = response.json()
 
-            if self.verbose:
+            if self.verbose > 1:
                 json_string = json.dumps(
                     response_data, indent=4, sort_keys=True
                 )
-                print(f"[gnome-night-shift] {json_string}")
+                print(f"[night-shift] {json_string}")
 
             tzid = response_data["tzid"]
             sunrise = datetime.fromisoformat(
@@ -155,10 +178,6 @@ class GetTimeOfSunriseSunset:
             times = (sunrise, sunset)
 
             saved: dict[str, Any] = {}
-
-            print(
-                f"gnome-night-shift {response_data.get('sunrise'), response_data.get('sunset'), response_data.get('tzid')}"
-            )
 
             times_tuple = GLib.Variant("(ss)", times)
             saved = {
@@ -173,48 +192,41 @@ class GetTimeOfSunriseSunset:
 
         except requests.exceptions.HTTPError as http_err:
             print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
+        except (
+            Exception
+        ) as e:  # Generic Exception must go last becuase it will catch any exception
+            print(f" Generic: {e}")
 
     def _save(self, data) -> None:
-        settings = self.settings()
-        if settings is None:
+        if self.settings is None:
             print(
-                f"gnome-night-shift: unable to save {', '.join(data)}: settings unavailable",
+                f"night-shift: unable to save {', '.join(data)}: settings unavailable",
                 file=sys.stderr,
             )
             return
 
         try:
+            # DataStore.set picks the right Gio setter for each type
             for key, value in data.items():
+                self.settings.set(key, value)
 
-                match value:
-                    case str():
-                        settings.set_string(key, value)
-                    case bool():
-                        settings.set_boolean(key, value)
-                    case int():
-                        settings.set_int(key, value)
-                    case _:
-                        settings.set_value(key, value)
-
-            if self.verbose:
-                print(f"{data}")
+            if self.verbose > 0:
+                pprint.pprint(data)
 
         except Exception as e:
-            print(f"ERROR SAVING {e}")
-            print(f"{data}")
+            print(f"ERROR SAVING: {e}", file=sys.stderr)
 
     def _get_static_location_from_settings(self) -> tuple[float, float]:
 
-        settings = self.settings()
-        if settings is None:
+        if self.settings is None:
             print(
-                "gnome-night-shift: no static location: settings unavailable",
+                "night-shift: no static location: self.settings unavailable",
                 file=sys.stderr,
             )
             return None
 
-        lat = settings.get_string("static-latitude")
-        lng = settings.get_string("static-longitude")
+        lat = self.settings.get("static-latitude")
+        lng = self.settings.get("static-longitude")
 
         if lat and lng:
             static_location = (float(lat), float(lng))
