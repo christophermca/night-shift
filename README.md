@@ -19,7 +19,11 @@ Next **Night shift** will determine the time for sunrise and sunset.
 Then **Night Shift** will attempt to create a Gsettings Object to store the data.
 
 ## Requirements
-python = ">=3.10"
+- Python 3.10+
+- GLib / GSettings and PyGObject (usually installed with your desktop; on Debian/Ubuntu: `python3-gi`)
+- `glib-compile-schemas` to compile the schema (Debian/Ubuntu: `libglib2.0-bin`)
+- Optional: systemd (Linux) for `night-shift services`
+- Optional: GeoClue for `-g`
 
 
 ## Installation

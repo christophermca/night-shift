@@ -228,3 +228,24 @@ def test_http_errors_are_reported_as_http_errors(mock_get, fetcher, capsys):
 
     assert fetcher._get_sunrise_sunset(40.7, -74.0, 0) is None
     assert "HTTP error occurred" in capsys.readouterr().out
+
+
+def test_save_without_settings_says_why(capsys):
+    fetcher = GetTimeOfSunriseSunset()  # no settings
+    capsys.readouterr()  # drop __init__'s "no static location" message
+
+    fetcher._save({"tzid": "America/New_York", "times": ("06:52", "18:51")})
+
+    assert capsys.readouterr().err == (
+        "night-shift: unable to save tzid, times: settings unavailable\n"
+    )
+
+
+def test_save_errors_go_to_stderr(fetcher, capsys):
+    fetcher.settings.set.side_effect = TypeError("can't save tzid")
+
+    fetcher._save({"tzid": "America/New_York"})
+
+    captured = capsys.readouterr()
+    assert "ERROR SAVING: can't save tzid" in captured.err
+    assert captured.out == ""  # stdout stays clean for `night-shift ... | cmd`

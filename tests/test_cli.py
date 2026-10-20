@@ -416,3 +416,14 @@ def test_setup_with_schema_keeps_what_each_unit_does(
     assert runs_check((tmp_path / unit.name).read_text()) == runs_check(
         unit.read_text()
     )
+
+
+def test_watch_without_path_uses_the_default_settings(
+    argv, mock_fetcher, settings_class, data_store_class
+):
+    argv("--watch")
+
+    cli.main()
+
+    settings_class.assert_called_once_with()  # Settings() -> DEFAULT_SCHEMA_PATH
+    data_store_class.assert_not_called()

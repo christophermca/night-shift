@@ -45,7 +45,11 @@ class DataStore:
         self.schema: Gio.SettingsSchema | None = None
 
         try:
-            schema_xml = next(Path(self.schema_path).glob("*.gschema.xml"))
+            schema_xml = next(
+                Path(self.schema_path).glob("*.gschema.xml"), None
+            )
+            if schema_xml is None:
+                raise LookupError(f"no .gschema.xml in {self.schema_path}")
             package_id = schema_xml.name.removesuffix(".gschema.xml")
             self.schema = _compile_schema(
                 self.schema_path, schema_id=package_id

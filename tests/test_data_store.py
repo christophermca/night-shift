@@ -22,7 +22,7 @@ SCHEMA_XML = next(
 def store(tmp_path):
     """A DataStore backed by a real Gio.Settings built from the package schema.
 
-    The schema is compiled into tmp_path under the id DataStore looks up, and
+    The schema is compiled into tmp_path as is (DataStore finds its id), and
     the settings live in GLib's in-memory backend, so nothing touches dconf.
     """
     if shutil.which("glib-compile-schemas") is None:
@@ -87,7 +87,7 @@ def test_fetched_times_are_saved_through_settings(mock_get, store, capsys):
 
     fetcher._get_sunrise_sunset(40.7, -74.0, False)
 
-    assert "ERROR SAVING" not in capsys.readouterr().out
+    assert "ERROR SAVING" not in capsys.readouterr().err
     assert store.data["times"] == ("06:52", "18:51")
     assert store.data["tzid"] == "America/New_York"
 
@@ -100,3 +100,10 @@ def test_schema_id_picks_which_schema_to_load(tmp_path):
     store = DataStore(str(tmp_path))
 
     assert store.schema.get_id() == package_id
+
+
+def test_folder_without_schema_xml_says_why(tmp_path, capsys):
+    store = DataStore(str(tmp_path))
+
+    assert store.available is False
+    assert f"no .gschema.xml in {tmp_path}" in capsys.readouterr().err

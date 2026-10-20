@@ -198,30 +198,23 @@ class GetTimeOfSunriseSunset:
             print(f" Generic: {e}")
 
     def _save(self, data) -> None:
-        # if self.settings is None:
-        #     raise AttributeError(
-        #         f"night-shift: unable to save {', '.join(data)}: self.settings unavailable",
-        #     )
-        # if data is None:
-        #     raise AttributeError("data is None")
-        #     return None
+        if self.settings is None:
+            print(
+                f"night-shift: unable to save {', '.join(data)}: settings unavailable",
+                file=sys.stderr,
+            )
+            return
+
         try:
+            # DataStore.set picks the right Gio setter for each type
             for key, value in data.items():
-                match value:
-                    case str():
-                        self.settings.set(key, value)
-                    case bool():
-                        self.settings.set(key, value)
-                    case int():
-                        self.settings.set(key, value)
-                    case _:
-                        self.settings.set(key, value)
+                self.settings.set(key, value)
 
             if self.verbose > 0:
                 pprint.pprint(data)
 
         except Exception as e:
-            print(f"ERROR SAVING: {e}")
+            print(f"ERROR SAVING: {e}", file=sys.stderr)
 
     def _get_static_location_from_settings(self) -> tuple[float, float]:
 
