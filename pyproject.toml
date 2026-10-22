@@ -9,10 +9,10 @@ authors = [
 
 name = "night-shift-cli"
 description = "Get Times of sunrise sunset for provided location"
-dependencies = ["requests>=2.28.0","pycairo>=1.29.1","pygobject>=3.56.3","argcomplete>=3.7.3" ]
+dependencies = ["requests>=2.28.0","pycairo>=1.29.1","pygobject>=3.56.3","argcomplete>=3.7.2" ]
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.4.2.2-beta"
+version = "0.4.2.3-beta"
 
 [project.urls]
 Homepage = "https://github.com/christophermca/night-shift"
@@ -32,7 +32,7 @@ dev = [
   "black", "locust"
 ]
 
-services = ["pycario", "PyGObject"]
+services = ["pycairo>=1.29.1", "PyGObject>=3.56.3"]
 
 test = [
   "pytest", "pytest-cov", "freezegun"

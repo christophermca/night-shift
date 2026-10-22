@@ -9,6 +9,12 @@ from .data_store import DataStore
 import sys
 import argparse
 import argcomplete
+import importlib.metadata
+
+try:
+    __version__ = importlib.metadata.version("night_shift_cli")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "unknown"
 
 
 def check(times=None, settings=None, verbose=0):
@@ -106,6 +112,13 @@ def main():
         "--verbose",
         action="count",
         default=0,
+        help="Prints more information",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
         help="Prints more information",
     )
 
