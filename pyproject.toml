@@ -7,12 +7,12 @@ authors = [
   { name="Christopher McAdams", email="mca.christopher@gmail.com" }
 ]
 
-name = "night-shift"
+name = "night-shift-cli"
 description = "Get Times of sunrise sunset for provided location"
-dependencies = ["requests>=2.28.0","PyGObject" ]
+dependencies = ["requests>=2.28.0","pycairo>=1.29.1","pygobject>=3.56.3","argcomplete>=3.7.3" ]
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.4.1"
+version = "0.4.2.2-beta"
 
 [project.urls]
 Homepage = "https://github.com/christophermca/night-shift"
@@ -31,6 +31,8 @@ where = ["src"]
 dev = [
   "black", "locust"
 ]
+
+services = ["pycario", "PyGObject"]
 
 test = [
   "pytest", "pytest-cov", "freezegun"

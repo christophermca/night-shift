@@ -1,4 +1,4 @@
-PROJECT_NAME := night-shift
+PROJECT_NAME := night-shift-cli
 SCHEMA_DIR   := src/night_shift/schemas
 VENV         := venv
 PYTHON       ?= python3
