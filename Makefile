@@ -36,7 +36,7 @@ publish-testpypi: rebuild
 	$(PY) -m twine upload --repository testpypi dist/*
 
 install:
-	python -m pip install --index-url https://test.pypi.org/simple/ $(PROJECT_NAME)
+	python -m pipx install --index-url https://test.pypi.org/simple/ $(PROJECT_NAME)
 
 install-dev: dev
 
