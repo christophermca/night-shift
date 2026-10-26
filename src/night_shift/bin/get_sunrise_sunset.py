@@ -2,12 +2,13 @@
 
 import re
 import gi
+import sys
 import pprint
 import json
 import argparse
-import requests
 import subprocess
-import sys
+import requests
+
 from collections import namedtuple
 from typing import Any
 from night_shift.bin.settings import Settings

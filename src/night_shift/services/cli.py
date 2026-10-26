@@ -1,12 +1,12 @@
 def setup_arguments(subparsers):
     services_parser = subparsers.add_parser(
-        "services", help="handle Night-Shift Service"
+        "services",
+        prog="night-shift services",
+        help="Handle Night-Shift Service",
     )
 
     action_parser = services_parser.add_subparsers(
         dest="subcommand",
-        title="sub-commands",
-        metavar="",
         prog="night-shift services",
     )
 

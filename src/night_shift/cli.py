@@ -10,6 +10,7 @@ import sys
 import argparse
 import argcomplete
 import importlib.metadata
+from importlib.util import find_spec
 
 try:
     __version__ = importlib.metadata.version("night_shift_cli")
@@ -44,19 +45,24 @@ def run_once(
         print(f"ERROR during run_once(): {e} ")
 
 
+def is_module_installed(
+    module_name: str,
+) -> bool:
+    result = importlib.util.find_spec(module_name)
+    return result is not None
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Get the times for the sunrise/sunset",
         prog="night-shift",
     )
 
-    services_parser = parser.add_subparsers(
-        dest="command",
-        title="services",
-        description="valid commands",
+    sub_parsers = parser.add_subparsers(
+        title="commands", dest="command", help=argparse.SUPPRESS
     )
 
-    setup_arguments(services_parser)
+    setup_arguments(sub_parsers)
 
     parser.add_argument(
         "--lat",
@@ -127,15 +133,22 @@ def main():
 
     # ------------ Services
     if args.command == "services":
-        night_shift_services = NightShiftServices()
-        if args.subcommand == "setup":
-            return night_shift_services.setup(args.schema, args.build_only)
-        elif args.subcommand == "start":
-            return night_shift_services.start()
-        elif args.subcommand == "stop":
-            return night_shift_services.stop()
-        elif args.subcommand == "taredown":
-            return night_shift_services.destroy()
+
+        if is_module_installed("cairo"):
+            night_shift_services = NightShiftServices()
+            if args.subcommand == "setup":
+                pass
+                # return night_shift_services.setup(args.schema, args.build_only)
+            elif args.subcommand == "start":
+                return night_shift_services.start()
+            elif args.subcommand == "stop":
+                return night_shift_services.stop()
+            elif args.subcommand == "taredown":
+                return night_shift_services.destroy()
+        else:
+            parser.exit(
+                1, "services requires: pip install `night-shift[services]`\n\n"
+            )
 
     # ------------ Watch
     if args.watch != False:

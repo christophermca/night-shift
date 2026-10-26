@@ -15,7 +15,7 @@ $(PY):
 .PHONY: dev test test-nocov build rebuild publish-testpypi install install-dev upgrade-dev compile-schema edit-schema
 
 dev: $(PY)
-	$(PY) -m pip install -e ".[test]"
+	$(PY) -m pip install -e ".[test,dev,services]"
 
 test: dev
 	$(PY) -m pytest -c pytest.ini
@@ -36,7 +36,7 @@ publish-testpypi: rebuild
 	$(PY) -m twine upload --repository testpypi dist/*
 
 install:
-	python -m pipx install --index-url https://test.pypi.org/simple/ $(PROJECT_NAME)
+	$(PY) -m pip install --index-url https://test.pypi.org/simple/ $(PROJECT_NAME)
 
 install-dev: dev
 
