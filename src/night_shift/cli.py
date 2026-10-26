@@ -45,7 +45,12 @@ def run_once(
         print(f"ERROR during run_once(): {e} ")
 
 
-def is_module_installed(
+def feature_check(name):
+    if name == "services":
+        return _is_module_installed("cairo")
+
+
+def _is_module_installed(
     module_name: str,
 ) -> bool:
     result = importlib.util.find_spec(module_name)
@@ -58,9 +63,11 @@ def main():
         prog="night-shift",
     )
 
-    sub_parsers = parser.add_subparsers(
-        title="commands", dest="command", help=argparse.SUPPRESS
-    )
+    # Optionally displays help infomation if pip sub package [services] was
+    # installed
+    sub_parser_help = None if feature_check("services") else argparse.SUPPRESS
+
+    sub_parsers = parser.add_subparsers(dest="command", help=sub_parser_help)
 
     setup_arguments(sub_parsers)
 
@@ -134,7 +141,7 @@ def main():
     # ------------ Services
     if args.command == "services":
 
-        if is_module_installed("cairo"):
+        if feature_check("services"):
             night_shift_services = NightShiftServices()
             if args.subcommand == "setup":
                 pass
@@ -190,9 +197,11 @@ def main():
 
     elif args.check_now != False:
         settings: Settings
-        if type(args.check_now) is str:
-            data_store = DataStore(args.check_now)
-            settings = Settings(data_store)
+
+        if feature_check("services"):  # Optional install [Services]
+            if type(args.check_now) is str:
+                data_store = DataStore(args.check_now)
+                settings = Settings(data_store)
         else:
             settings = Settings()
 

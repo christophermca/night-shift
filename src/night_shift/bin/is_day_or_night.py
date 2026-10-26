@@ -30,6 +30,8 @@ def is_day_or_night(
 
         times = settings.get("times")
 
+    if not times:
+        return
     [sunrise, sunset] = times
     current_time = datetime.now().strftime("%H:%M")  # 24hr format
 
