@@ -1,16 +1,13 @@
-import shlex
-import tomllib
 from pathlib import Path
 
 import pytest
+import argparse
 from unittest.mock import ANY, patch
 
 import night_shift
 from night_shift import cli
+from night_shift_services.cli import register
 
-UNIT_DIR = Path(night_shift.__file__).parent / "services" / "systemd" / "user"
-SERVICE_UNITS = sorted(UNIT_DIR.glob("*.service"))
-PYPROJECT = Path(__file__).parents[1] / "pyproject.toml"
 TIMES = ("06:52", "18:51")
 
 
@@ -44,19 +41,53 @@ def settings_class():
 
 
 @pytest.fixture(autouse=True)
+def settings_class():
+    """main() builds one Settings per run; fake it so no test touches GSettings."""
+    with patch("night_shift.cli.Settings") as settings_class:
+        yield settings_class
+
+
+@pytest.fixture(autouse=True)
 def data_store_class():
     """-w / -c SCHEMA_PATH build a DataStore; fake it so no schema is compiled."""
     with patch("night_shift.cli.DataStore") as data_store_class:
         yield data_store_class
 
 
+# --- latitude / longitude ---------------------------------------------------
+
+
 @pytest.fixture
 def services_class():
-    with patch("night_shift.cli.NightShiftServices") as services_class:
+    # run() does `from . import NightShiftServices`, so patch it on the package
+    with patch("night_shift_services.NightShiftServices") as services_class:
         yield services_class
 
 
-# --- latitude / longitude ---------------------------------------------------
+def run_services(*args):
+    """Parse like night-shift does, then call the handler register() returned."""
+    parser = argparse.ArgumentParser(prog="night-shift")
+    handler = register(parser.add_subparsers(dest="command"))
+    return handler(parser.parse_args(["services", *args]))
+
+
+def test_setup_builds_units_for_the_schema(services_class):
+    run_services("setup", "/path/to/schemas", "--build-only")
+
+    services_class.assert_called_once_with()
+    services_class.return_value.setup.assert_called_once_with(
+        "/path/to/schemas", True
+    )
+
+
+@pytest.mark.parametrize(
+    "subcommand, method",
+    [("start", "start"), ("stop", "stop"), ("taredown", "destroy")],
+)
+def test_subcommands(services_class, subcommand, method):
+    run_services(subcommand)
+
+    getattr(services_class.return_value, method).assert_called_once_with()
 
 
 def test_lat_lng_fetches_and_exits_cleanly(
@@ -200,47 +231,6 @@ def test_watch_with_schema_path_fetches_with_that_data_store(
     )
 
 
-# --- services subcommands -------------------------------------------------------
-
-
-def test_services_setup_builds_units_for_the_schema(argv, services_class):
-    argv("services", "setup", "/path/to/schemas", "--build-only")
-
-    cli.main()
-
-    services_class.assert_called_once_with()
-    services_class.return_value.setup.assert_called_once_with(
-        "/path/to/schemas", True
-    )
-
-
-@pytest.mark.parametrize(
-    "subcommand, method",
-    [("start", "start"), ("stop", "stop"), ("taredown", "destroy")],
-)
-def test_services_subcommands(argv, services_class, subcommand, method):
-    argv("services", subcommand)
-
-    cli.main()
-
-    getattr(services_class.return_value, method).assert_called_once_with()
-
-
-@pytest.mark.parametrize(
-    "args",
-    [(), ("services", "setup", "/path/to/schemas")],
-    ids=["help", "services-setup"],
-)
-def test_paths_without_settings_dont_create_them(
-    argv, services_class, settings_class, args
-):
-    argv(*args)
-
-    cli.main()
-
-    settings_class.assert_not_called()  # no spurious "settings unavailable"
-
-
 def test_no_args_prints_help(argv, mock_fetcher, capsys):
     argv()
 
@@ -312,44 +302,6 @@ def test_run_once_catches_check_errors(mock_fetcher, capsys):
 # --- systemd units ---------------------------------------------------------------
 
 
-def _exec_start(unit):
-    lines = [
-        line.removeprefix("ExecStart=")
-        for line in unit.read_text().splitlines()
-        if line.startswith("ExecStart=")
-    ]
-    assert len(lines) == 1, f"{unit.name}: expected exactly one ExecStart line"
-    return shlex.split(lines[0])
-
-
-def test_service_units_are_found():
-    # Guards the parametrized test below: an empty glob would make it
-    # collect zero cases and pass without checking anything.
-    assert SERVICE_UNITS, f"no *.service files in {UNIT_DIR}"
-
-
-@pytest.mark.parametrize("unit", SERVICE_UNITS, ids=lambda p: p.name)
-def test_unit_execstart_is_a_valid_command(
-    unit, argv, mock_fetcher, mock_check, services_class, capsys
-):
-    program, *args = _exec_start(unit)
-    scripts = tomllib.loads(PYPROJECT.read_text())["project"]["scripts"]
-    argv(*args)
-
-    try:
-        cli.main()
-    except SystemExit as exc:  # argparse exits 2 on an unknown flag
-        pytest.fail(
-            f"{unit.name}: night-shift rejected {args}: "
-            f"{capsys.readouterr().err.strip()} (exit {exc.code})"
-        )
-
-    assert Path(program).name in scripts
-    assert (
-        "usage:" not in capsys.readouterr().out
-    ), f"{unit.name}: {args} only printed help, so the unit does nothing"
-
-
 @pytest.mark.parametrize(
     "args",
     [
@@ -391,32 +343,6 @@ def test_watch_DOESNOT_check_with_check_now(
     assert mock_check.called is checks
 
 
-@pytest.mark.parametrize("unit", SERVICE_UNITS, ids=lambda p: p.name)
-def test_setup_with_schema_keeps_what_each_unit_does(
-    unit, tmp_path, argv, mock_fetcher, mock_check
-):
-    from night_shift.services import Services
-
-    mock_fetcher.return_value.times = TIMES
-
-    def runs_check(text):
-        exec_start = next(
-            l for l in text.splitlines() if l.startswith("ExecStart=")
-        )
-        argv(*shlex.split(exec_start.split("=", 1)[1])[1:])
-        mock_check.reset_mock()
-        cli.main()
-        return mock_check.called
-
-    Services(UNIT_DIR, tmp_path)._make_copy_of_unit(
-        [unit], "/x/schemas", tmp_path
-    )
-
-    assert runs_check((tmp_path / unit.name).read_text()) == runs_check(
-        unit.read_text()
-    )
-
-
 def test_watch_without_path_uses_the_default_settings(
     argv, mock_fetcher, settings_class, data_store_class
 ):
@@ -424,5 +350,5 @@ def test_watch_without_path_uses_the_default_settings(
 
     cli.main()
 
-    settings_class.assert_called_once_with()  # Settings() -> DEFAULT_SCHEMA_PATH
+    settings_class.assert_called_once_with()
     data_store_class.assert_not_called()

@@ -15,7 +15,7 @@ $(PY):
 .PHONY: dev test test-nocov build rebuild publish-testpypi install install-dev upgrade-dev compile-schema edit-schema
 
 dev: $(PY)
-	$(PY) -m pip install -e ".[test,dev,services]"
+	$(PY) -m pip install -e ".[test,dev]" -e ./services
 
 test: dev
 	$(PY) -m pytest -c pytest.ini

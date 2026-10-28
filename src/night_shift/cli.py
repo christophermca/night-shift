@@ -84,8 +84,6 @@ def main():
         prog="night-shift",
     )
 
-    # Optionally displays help infomation if pip sub package [services] was
-    # installed
     sub_parsers = parser.add_subparsers(dest="command")
     commands = load_commands(sub_parsers)
 
