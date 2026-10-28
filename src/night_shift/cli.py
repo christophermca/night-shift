@@ -27,21 +27,25 @@ def load_commands(subparsers) -> dict:
         services = "night_shift_services.cli:register"
     `register(subparsers)` adds its parser and returns `handler(args)`.
     """
-    handlers = {}
-    for entry_point in importlib.metadata.entry_points(group=PLUGIN_GROUP):
-        handlers[entry_point.name] = entry_point.load()(subparsers)
+    try:
+        handlers = {}
+        for entry_point in importlib.metadata.entry_points(group=PLUGIN_GROUP):
+            handlers[entry_point.name] = entry_point.load()(subparsers)
 
-    # Commands whose plugin isn't installed still parse, and say how to get them
-    for name, extra in OPTIONAL_COMMANDS.items():
-        if name not in handlers:
-            stub = subparsers.add_parser(
-                name, help=f"(not installed: pip install '{extra}')"
-            )
-            stub.add_argument(
-                "rest", nargs=argparse.REMAINDER
-            )  # accept anything
-            handlers[name] = _not_installed(name, extra)
-    return handlers
+        # Commands whose plugin isn't installed still parse, and say how to get them
+        for name, extra in OPTIONAL_COMMANDS.items():
+            if name not in handlers:
+                stub = subparsers.add_parser(
+                    name, help=f"(not installed: pip install '{extra}')"
+                )
+                stub.add_argument(
+                    "rest", nargs=argparse.REMAINDER
+                )  # accept anything
+                handlers[name] = _not_installed(name, extra)
+        return handlers
+
+    except Exception as e:
+        print("{e}")
 
 
 def _not_installed(name, extra):
