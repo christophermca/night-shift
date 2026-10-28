@@ -86,11 +86,8 @@ def main():
 
     # Optionally displays help infomation if pip sub package [services] was
     # installed
-    sub_parser_help = None if feature_check("services") else argparse.SUPPRESS
-
     sub_parsers = parser.add_subparsers(dest="command")
     commands = load_commands(sub_parsers)
-    setup_arguments(sub_parsers)
 
     parser.add_argument(
         "--lat",
@@ -162,21 +159,6 @@ def main():
     # ------------ Plugin Commands
     if args.command in commands:
         return commands[args.command](args)
-
-        if feature_check("services"):
-            night_shift_services = NightShiftServices()
-            if args.subcommand == "setup":
-                return night_shift_services.setup(args.schema, args.build_only)
-            elif args.subcommand == "start":
-                return night_shift_services.start()
-            elif args.subcommand == "stop":
-                return night_shift_services.stop()
-            elif args.subcommand == "taredown":
-                return night_shift_services.destroy()
-        else:
-            parser.exit(
-                1, "services requires: pip install `night-shift[services]`\n\n"
-            )
 
     # ------------ Watch
     if args.watch != False:
