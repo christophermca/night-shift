@@ -44,6 +44,14 @@ def mock_settings():
 
 
 @pytest.fixture
+def argv(monkeypatch):
+    def set_args(*args):
+        monkeypatch.setattr("sys.argv", ["night-shift", *args])
+
+    return set_args
+
+
+@pytest.fixture
 def fake_where_am_i():
     def make(lines):
         proc = MagicMock()
