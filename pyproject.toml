@@ -37,7 +37,7 @@ services = [
 ]
 
 test = [
-  "pytest", "pytest-cov", "freezegun"
+  "pytest", "pytest-cov", "freezegun", "tomli; python_version < '3.11'"
 ]
 
 [tool.setuptools.package-data]

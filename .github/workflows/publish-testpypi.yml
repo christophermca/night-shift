@@ -1,9 +1,6 @@
 name: Publish to TestPyPI
 
 # Run by hand: Actions tab -> "Publish to TestPyPI" -> Run workflow.
-# Needs a repository secret TEST_PYPI_API_TOKEN (a TestPyPI API token; it must
-# be scoped to the whole account until both projects exist on TestPyPI).
-on:
   workflow_dispatch:
     inputs:
       package:
@@ -11,6 +8,8 @@ on:
         type: choice
         options: [both, core, services]
         default: both
+      push:
+        tags: ["testpypi-*"]
 
 jobs:
   test:
@@ -25,6 +24,7 @@ jobs:
 
       # PyGObject builds from source on the runner; it needs these headers.
       # libglib2.0-bin provides glib-compile-schemas for the schema tests.
+
       - name: Install system libraries
         run: |
           sudo apt-get update
@@ -87,7 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: test-pypi
     permissions:
-      id-write: write
+      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: test-pypi
     permissions:
-      id-write: write
+      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
