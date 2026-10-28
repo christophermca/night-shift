@@ -1,10 +1,15 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
+authors = [
+  { name="Christopher McAdams", email="mca.christopher@gmail.com" }
+]
 name = "night-shift-services"
-version = "0.0.2"
+
+# version = "0.0.2"
+dynamic = ["version"]
 description = "systemd timers for night-shift"
 requires-python = ">=3.10"
 dependencies = ["night-shift-cli>=0.4.3,<0.5"]
@@ -15,6 +20,13 @@ services = "night_shift_services.cli:register"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools_scm]
+root = ".."                    # the git repo is one folder up
+tag_regex = '^services-v(?P<version>\d+\.\d+\.\d+)$'
+git_describe_command = "git describe --dirty --tags --long --match 'services-v*'"
+local_scheme = "no-local-version"
+fallback_version = "0.0.0"
 
 [tool.setuptools.package-data]
 "night_shift_services" = ["systemd/user/*.timer", "systemd/user/*.service"]
