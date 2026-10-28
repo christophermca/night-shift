@@ -7,7 +7,8 @@ name = "night-shift-services"
 version = "0.0.2"
 description = "systemd timers for night-shift"
 requires-python = ">=3.10"
-dependencies = ["night-shift-cli==0.4.3"]
+dependencies = ["night-shift-cli>=0.4.3,<0.5"]
+readme = "README.md"
 
 [project.entry-points."night_shift.commands"]
 services = "night_shift_services.cli:register"

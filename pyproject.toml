@@ -33,7 +33,7 @@ dev = [
 ]
 
 services = [
-  "night-shift-services==0.0.2"
+  "night-shift-services>=0.0.2"
 ]
 
 test = [
