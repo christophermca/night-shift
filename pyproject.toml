@@ -12,7 +12,7 @@ description = "Get Times of sunrise sunset for provided location"
 dependencies = ["requests>=2.28.0","argcomplete>=3.7.2","PyGObject>=3.48.0"]
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.4.2.3-beta"
+version = "0.4.3"
 
 [project.urls]
 Homepage = "https://github.com/christophermca/night-shift"
@@ -33,7 +33,7 @@ dev = [
 ]
 
 services = [
-  "night-shift-services==0.4.2.3b0"
+  "night-shift-services==0.0.2"
 ]
 
 test = [

@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "night-shift-services"
-version = "0.4.2.3b0"
+version = "0.0.2"
 description = "systemd timers for night-shift"
 requires-python = ">=3.10"
-dependencies = ["night-shift-cli==0.4.2.3b0"]
+dependencies = ["night-shift-cli==0.4.3"]
 
 [project.entry-points."night_shift.commands"]
 services = "night_shift_services.cli:register"
