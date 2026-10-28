@@ -207,7 +207,6 @@ def test_services_setup_builds_units_for_the_schema(argv, services_class):
     argv("services", "setup", "/path/to/schemas", "--build-only")
 
     cli.main()
-    print("hey")
 
     services_class.assert_called_once_with()
     services_class.return_value.setup.assert_called_once_with(

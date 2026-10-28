@@ -196,14 +196,19 @@ def main():
         )
 
     elif args.check_now != False:
-        settings: Settings
+        settings: Settings | None = None
 
-        if feature_check("services"):  # Optional install [Services]
-            if type(args.check_now) is str:
-                data_store = DataStore(args.check_now)
-                settings = Settings(data_store)
-        else:
-            settings = Settings()
+        def get_settings() -> Settings:
+            if not feature_check("services"):
+                return Settings()
+            else:
+                if type(args.check_now) is str:
+                    data_store = DataStore(args.check_now)
+                    return Settings(data_store)
+                else:
+                    return Settings()
+
+        settings = get_settings()
 
         check(settings=settings, verbose=args.verbose)
         return None
