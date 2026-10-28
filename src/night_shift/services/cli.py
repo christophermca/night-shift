@@ -1,3 +1,23 @@
+def register(subparsers):
+    """Entry point for night-shift: add the `services` command, return its handler."""
+    setup_arguments(subparsers)
+    return run
+
+
+def run(args):
+    from . import NightShiftServices
+
+    services = NightShiftServices()
+    if args.subcommand == "setup":
+        return services.setup(args.schema, args.build_only)
+    if args.subcommand == "start":
+        return services.start()
+    if args.subcommand == "stop":
+        return services.stop()
+    if args.subcommand == "taredown":
+        return services.destroy()
+
+
 def setup_arguments(subparsers):
     services_parser = subparsers.add_parser(
         "services",

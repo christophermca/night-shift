@@ -33,7 +33,7 @@ dev = [
 ]
 
 services = [
-  "pycairo"
+  "night-shift-services==0.4.2.3b0"
 ]
 
 test = [
@@ -42,7 +42,7 @@ test = [
 
 [tool.setuptools.package-data]
 "night_shift" =  [
-  "schemas/*.xml", "services/systemd/user/*.timer", "services/systemd/user/*.service"
+  "schemas/*.xml"
 ]
 
 classifiers = [

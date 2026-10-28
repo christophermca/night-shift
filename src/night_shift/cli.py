@@ -3,19 +3,52 @@
 from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 from night_shift.bin.is_day_or_night import is_day_or_night
 from night_shift.bin.settings import Settings
-from night_shift.services import NightShiftServices, setup_arguments
 from .data_store import DataStore
 
 import sys
 import argparse
 import argcomplete
 import importlib.metadata
-from importlib.util import find_spec
+
+PLUGIN_GROUP = "night_shift.commands"
+OPTIONAL_COMMANDS = {"services": "night-shift-cli[services]"}
 
 try:
     __version__ = importlib.metadata.version("night_shift_cli")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
+
+
+def load_commands(subparsers) -> dict:
+    """Let installed plugins add subcommands; returns {command: handler}.
+
+    A plugin registers in its own pyproject.toml:
+        [project.entry-points."night_shift.commands"]
+        services = "night_shift_services.cli:register"
+    `register(subparsers)` adds its parser and returns `handler(args)`.
+    """
+    handlers = {}
+    for entry_point in importlib.metadata.entry_points(group=PLUGIN_GROUP):
+        handlers[entry_point.name] = entry_point.load()(subparsers)
+
+    # Commands whose plugin isn't installed still parse, and say how to get them
+    for name, extra in OPTIONAL_COMMANDS.items():
+        if name not in handlers:
+            stub = subparsers.add_parser(
+                name, help=f"(not installed: pip install '{extra}')"
+            )
+            stub.add_argument(
+                "rest", nargs=argparse.REMAINDER
+            )  # accept anything
+            handlers[name] = _not_installed(name, extra)
+    return handlers
+
+
+def _not_installed(name, extra):
+    def handler(args):
+        sys.exit(f"night-shift {name} requires: pip install '{extra}'")
+
+    return handler
 
 
 def check(times=None, settings=None, verbose=0):
@@ -45,18 +78,6 @@ def run_once(
         print(f"ERROR during run_once(): {e} ")
 
 
-def feature_check(name):
-    if name == "services":
-        return _is_module_installed("cairo")
-
-
-def _is_module_installed(
-    module_name: str,
-) -> bool:
-    result = importlib.util.find_spec(module_name)
-    return result is not None
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Get the times for the sunrise/sunset",
@@ -67,8 +88,8 @@ def main():
     # installed
     sub_parser_help = None if feature_check("services") else argparse.SUPPRESS
 
-    sub_parsers = parser.add_subparsers(dest="command", help=sub_parser_help)
-
+    sub_parsers = parser.add_subparsers(dest="command")
+    commands = load_commands(sub_parsers)
     setup_arguments(sub_parsers)
 
     parser.add_argument(
@@ -138,14 +159,14 @@ def main():
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
-    # ------------ Services
-    if args.command == "services":
+    # ------------ Plugin Commands
+    if args.command in commands:
+        return commands[args.command](args)
 
         if feature_check("services"):
             night_shift_services = NightShiftServices()
             if args.subcommand == "setup":
-                pass
-                # return night_shift_services.setup(args.schema, args.build_only)
+                return night_shift_services.setup(args.schema, args.build_only)
             elif args.subcommand == "start":
                 return night_shift_services.start()
             elif args.subcommand == "stop":
@@ -196,19 +217,11 @@ def main():
         )
 
     elif args.check_now != False:
-        settings: Settings | None = None
-
-        def get_settings() -> Settings:
-            if not feature_check("services"):
-                return Settings()
-            else:
-                if type(args.check_now) is str:
-                    data_store = DataStore(args.check_now)
-                    return Settings(data_store)
-                else:
-                    return Settings()
-
-        settings = get_settings()
+        settings = (
+            Settings(DataStore(args.check_now))
+            if type(args.check_now) is str
+            else Settings()
+        )
 
         check(settings=settings, verbose=args.verbose)
         return None

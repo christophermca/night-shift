@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "night-shift-services"
+version = "0.4.2.3b0"
+description = "systemd timers for night-shift"
+requires-python = ">=3.10"
+dependencies = ["night-shift-cli==0.4.2.3b0"]
+
+[project.entry-points."night_shift.commands"]
+services = "night_shift_services.cli:register"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"night_shift_services" = ["systemd/user/*.timer", "systemd/user/*.service"]
