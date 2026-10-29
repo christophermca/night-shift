@@ -1,6 +1,6 @@
 name: Publish to TestPyPI
 
-# Run by hand: Actions tab -> "Publish to TestPyPI" -> Run workflow.
+  # Run by hand: Actions tab -> "Publish to TestPyPI" -> Run workflow.
   workflow_dispatch:
     inputs:
       package:
