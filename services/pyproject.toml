@@ -9,7 +9,7 @@ authors = [
 name = "night-shift-services"
 
 dynamic = ["version"]
-description = "systemd timers for night-shift"
+description = "systemd timers and services for night-shift"
 requires-python = ">=3.10"
 dependencies = ["night-shift-cli>=0.4.3,<0.5"]
 readme = "README.md"
