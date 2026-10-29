@@ -1,9 +1,6 @@
 name: Publish to TestPyPI
 
 # Run by hand: Actions tab -> "Publish to TestPyPI" -> Run workflow.
-# Needs a repository secret TEST_PYPI_API_TOKEN (a TestPyPI API token; it must
-# be scoped to the whole account until both projects exist on TestPyPI).
-on:
   workflow_dispatch:
     inputs:
       package:
@@ -19,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
