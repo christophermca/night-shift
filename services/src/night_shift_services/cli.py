@@ -1,20 +1,28 @@
 def register(subparsers):
     """Entry point for night-shift: add the `services` command, return its handler."""
-    setup_arguments(subparsers)
-    return run
+    services_parser = setup_arguments(subparsers)
+
+    def handler(args):
+        if args.subcommand is None:  # bare `night-shift services`
+            services_parser.print_help()
+            return None  # nothing was done
+        return run(args)
+
+    return handler
 
 
 def run(args):
+    print(args)
     from . import NightShiftServices
 
     services = NightShiftServices()
     if args.subcommand == "setup":
         return services.setup(args.schema, args.build_only)
-    if args.subcommand == "start":
+    elif args.subcommand == "start":
         return services.start()
-    if args.subcommand == "stop":
+    elif args.subcommand == "stop":
         return services.stop()
-    if args.subcommand == "taredown":
+    elif args.subcommand == "taredown":
         return services.destroy()
 
 
@@ -59,3 +67,5 @@ def setup_arguments(subparsers):
     build_action_parser = action_parser.add_parser(
         "taredown", help="removes linked systemd units"
     )
+
+    return services_parser

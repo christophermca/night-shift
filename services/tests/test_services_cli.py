@@ -37,3 +37,11 @@ def test_subcommands(services_class, subcommand, method):
     run_services(subcommand)
 
     getattr(services_class.return_value, method).assert_called_once_with()
+
+
+def test_bare_services_prints_help_and_does_nothing(services_class, capsys):
+    result = run_services()
+
+    assert "usage: night-shift services" in capsys.readouterr().out
+    assert result is None  # main() returns it, so the shell sees exit status 2
+    services_class.assert_not_called()

@@ -14,7 +14,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 
-dynamic = ["version"] # "0.4.3
+dynamic = ["version"] # "0.4.*
 
 classifiers = [
   "Programming Language :: Python :: 3",
