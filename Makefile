@@ -1,4 +1,5 @@
 PROJECT_NAME := night-shift-cli
+SERVICE_NAME := night-shift-services
 SCHEMA_DIR   := src/night_shift/schemas
 VENV         := venv
 PYTHON       ?= python3
@@ -36,7 +37,7 @@ publish-testpypi: rebuild
 	$(PY) -m twine upload --repository testpypi dist/*
 
 install:
-	$(PY) -m pip install --index-url https://test.pypi.org/simple/ $(PROJECT_NAME)
+	$(PY) -m pip install --index-url https://test.pypi.org/simple/ $(PROJECT_NAME) $(SERVICE_NAME)
 
 install-dev: dev
 
