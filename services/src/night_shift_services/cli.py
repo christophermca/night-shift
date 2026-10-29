@@ -1,3 +1,11 @@
+import importlib.metadata
+
+try:
+    __version__ = importlib.metadata.version("night_shift_services")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "unknown"
+
+
 def register(subparsers):
     """Entry point for night-shift: add the `services` command, return its handler."""
     services_parser = setup_arguments(subparsers)
@@ -30,6 +38,13 @@ def setup_arguments(subparsers):
         "services",
         prog="night-shift services",
         help="Handle Night-Shift Service",
+    )
+
+    services_parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Prints more information",
     )
 
     action_parser = services_parser.add_subparsers(
