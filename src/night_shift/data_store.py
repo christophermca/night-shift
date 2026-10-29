@@ -2,7 +2,7 @@ import sys
 import subprocess
 from pathlib import Path
 from gi.repository import Gio, GLib
-from typing import TypedDict, NotRequired, get_type_hints
+from typing import TypedDict, get_type_hints
 
 default_config_file = ".var/night-shift/data.json"
 

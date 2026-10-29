@@ -1,8 +1,12 @@
 """The plugin's systemd units must call the core CLI with flags it accepts."""
 
 import shlex
-import tomli as tomllib
 from pathlib import Path
+
+try:
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:  # Python 3.10: the same parser, as a package
+    import tomli as tomllib
 
 import pytest
 
