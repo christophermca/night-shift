@@ -12,7 +12,6 @@ def register(subparsers):
 
 
 def run(args):
-    print(args)
     from . import NightShiftServices
 
     services = NightShiftServices()
@@ -22,7 +21,7 @@ def run(args):
         return services.start()
     elif args.subcommand == "stop":
         return services.stop()
-    elif args.subcommand == "taredown":
+    elif args.subcommand == "teardown":
         return services.destroy()
 
 
@@ -39,15 +38,15 @@ def setup_arguments(subparsers):
     )
 
     stop_action_parser = action_parser.add_parser(
-        "stop", help="Stop night-shift services"
+        "stop", help="Stops night-shift services"
     )
 
     start_action_parser = action_parser.add_parser(
-        "start", help="starts night-shift services"
+        "start", help="Starts night-shift services"
     )
 
     build_action_parser = action_parser.add_parser(
-        "setup", help="builds night-shift services"
+        "setup", help="Builds night-shift services"
     )
 
     build_action_parser.add_argument(
@@ -60,12 +59,12 @@ def setup_arguments(subparsers):
         "schema",
         type=str,
         action="store",
-        default=None,
+        nargs="?",
         help="Path to GObject schema",
     )
 
-    build_action_parser = action_parser.add_parser(
-        "taredown", help="removes linked systemd units"
+    teardown_action_parser = action_parser.add_parser(
+        "teardown", help="Removes linked systemd units"
     )
 
     return services_parser

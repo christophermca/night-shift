@@ -31,7 +31,7 @@ def test_setup_builds_units_for_the_schema(services_class):
 
 @pytest.mark.parametrize(
     "subcommand, method",
-    [("start", "start"), ("stop", "stop"), ("taredown", "destroy")],
+    [("start", "start"), ("stop", "stop"), ("teardown", "destroy")],
 )
 def test_subcommands(services_class, subcommand, method):
     run_services(subcommand)
@@ -43,5 +43,5 @@ def test_bare_services_prints_help_and_does_nothing(services_class, capsys):
     result = run_services()
 
     assert "usage: night-shift services" in capsys.readouterr().out
-    assert result is None  # main() returns it, so the shell sees exit status 2
+    assert result is None  # main() returns None
     services_class.assert_not_called()
