@@ -64,3 +64,5 @@ options:
 ## Source Code
 
 * GitHub: https://github.com/christophermca/night-shift
+
+[![Publish to TestPyPI](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml/badge.svg?branch=dev&event=workflow_dispatch)](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml)
