@@ -12,10 +12,15 @@ description = "Get Times of sunrise sunset for provided location"
 dependencies = ["requests>=2.28.0","argcomplete>=3.7.2","PyGObject>=3.48.0"]
 readme = "README.md"
 requires-python = ">=3.10"
-# version = "0.4.3"
-dynamic = ["version"]
 
-version = "0.4.3"
+
+dynamic = ["version"] # "0.4.3
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+]
 
 
 [project.urls]
@@ -55,9 +60,3 @@ tag_regex = '^cli-v(?P<version>\d+\.\d+\.\d+)$'
 git_describe_command = "git describe --dirty --tags --long --match 'cli-v*'"
 local_scheme = "no-local-version"   # PyPI/TestPyPI reject the "+g1a2b3c" suffix
 fallback_version = "0.0.0"          # used when there's no .git (e.g. git archive)
-
-classifiers = [
-  "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
-  "Operating System :: Linux",
-]

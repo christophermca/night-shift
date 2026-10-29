@@ -44,6 +44,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -67,7 +69,7 @@ jobs:
       - name: Smoke-test the built wheels
         run: |
           python -m venv /tmp/smoke
-          /tmp/smoke/bin/pip install --find-links dist/core --find-links dist/services \
+          /tmp/smoke/bin/pip install --pre --find-links dist/core --find-links dist/services \
             "night-shift-cli[services]"
           /tmp/smoke/bin/night-shift --version
           /tmp/smoke/bin/night-shift services --help

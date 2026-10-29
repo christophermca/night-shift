@@ -1,7 +1,7 @@
 """The plugin's systemd units must call the core CLI with flags it accepts."""
 
 import shlex
-import tomllib
+import tomli as tomllib
 from pathlib import Path
 
 import pytest
