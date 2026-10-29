@@ -14,11 +14,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -43,11 +43,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -66,19 +66,32 @@ jobs:
 
       # Install the freshly built wheels together, the way a user would, so a
       # version-pin conflict between the two packages fails here, not on TestPyPI.
+      #
+      # Untagged commits build dev versions (0.4.4.dev3), which pip skips by
+      # default. Instead of --pre (pre-releases for *every* package, requests
+      # included), pin our two packages to the exact versions just built: a
+      # pin that names a pre-release allows it for that package only.
       - name: Smoke-test the built wheels
         run: |
+          for wheel in dist/*/*.whl; do
+            file=$(basename "$wheel")          # night_shift_cli-0.4.4.dev3-py3-none-any.whl
+            name=${file%%-*}                   # night_shift_cli
+            version=${file#*-}; version=${version%%-*}   # 0.4.4.dev3
+            echo "${name//_/-}==${version}"
+          done > /tmp/constraints.txt
+          cat /tmp/constraints.txt
           python -m venv /tmp/smoke
-          /tmp/smoke/bin/pip install --pre --find-links dist/core --find-links dist/services \
+          /tmp/smoke/bin/pip install --constraint /tmp/constraints.txt \
+            --find-links dist/core --find-links dist/services \
             "night-shift-cli[services]"
           /tmp/smoke/bin/night-shift --version
           /tmp/smoke/bin/night-shift services --help
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: core-dist
           path: dist/core/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: services-dist
           path: dist/services/
@@ -92,7 +105,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: core-dist
           path: dist/
@@ -115,7 +128,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: services-dist
           path: dist/
