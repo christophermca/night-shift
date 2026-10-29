@@ -119,4 +119,4 @@ Once configured, GNOME Night Shift automatically changes between Day and Night m
 * GitHub: https://github.com/christophermca/gnome-night-shift
 * Arch Linux (AUR): https://aur.archlinux.org/packages/gnome-night-shift-git
 
-[![Publish to TestPyPI](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml/badge.svg?branch=dev&event=workflow_dispatch)](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml)[![Publish to TestPyPI](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml/badge.svg?branch=dev&event=workflow_dispatch)](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml)
+[![Publish to TestPyPI](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml/badge.svg?branch=dev&event=workflow_dispatch)](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml)
