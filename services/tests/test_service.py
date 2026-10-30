@@ -211,3 +211,21 @@ def test_make_copy_appends_schema_to_exec_start(dirs, tmp_path):
         "ExecStart=/bin/night-shift -w /x/schemas\n"
         "Restart=no\n"
     )
+
+
+@pytest.mark.parametrize("flag", ["-c", "-w"])
+def test_make_copy_reuses_a_trailing_schema_flag(dirs, tmp_path, flag):
+    # -c and -w both take the schema path, so append only the path, not a 2nd flag
+    unit = f"[Service]\nExecStart=/bin/night-shift {flag}\n"
+    source, target = dirs
+    (source / "x.service").write_text(unit)
+    out = tmp_path / "out"
+    out.mkdir()
+
+    Services(source, target)._make_copy_of_unit(
+        [source / "x.service"], "/x/schemas", out
+    )
+
+    assert (out / "x.service").read_text() == (
+        f"[Service]\nExecStart=/bin/night-shift {flag} /x/schemas\n"
+    )
