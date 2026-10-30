@@ -60,7 +60,7 @@ class Services:
 
             self._make_copy_of_unit(self.all_units, schema, tmp_dir)
 
-            if any(tmp_dir.iterdir()):
+            if any(tmp_dir.iterdir()):  # if directory is not empty
                 self._symlink(tmp_dir)
 
         else:
