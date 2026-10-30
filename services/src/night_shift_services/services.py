@@ -143,7 +143,7 @@ class Services:
                                 # -c takes the schema path itself; -w never checks
                                 option = (
                                     ""
-                                    if cmd.endswith(" -c")
+                                    if cmd.endswith((" -c", " -w"))
                                     else f" {WATCH_OPTION}"
                                 )
                                 lines[i] = f"{cmd}{option} {schema_path}\n"
