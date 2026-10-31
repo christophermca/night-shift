@@ -7,7 +7,7 @@ authors = [
   { name="Christopher McAdams", email="mca.christopher@gmail.com" }
 ]
 
-name = "sun-shift"
+name = "noc-shift"
 description = "Shift between light and dark with the sun: sunrise/sunset times and day or night"
 dependencies = ["requests>=2.28.0","argcomplete>=3.7.2","PyGObject>=3.48.0"]
 readme = "README.md"

@@ -60,7 +60,7 @@ jobs:
       - name: Build both packages
         run: |
           python -m pip install --upgrade pip build twine
-          python -m build . --outdir dist/core            # sun-shift
+          python -m build . --outdir dist/core            # noc-shift
           python -m build gnome-night-shift --outdir dist/gnome
           python -m twine check --strict dist/*/*
 
@@ -74,8 +74,8 @@ jobs:
       - name: Smoke-test the built wheels
         run: |
           for wheel in dist/*/*.whl; do
-            file=$(basename "$wheel")          # sun_shift-0.4.4.dev3-py3-none-any.whl
-            name=${file%%-*}                   # sun_shift
+            file=$(basename "$wheel")          # noc_shift-0.4.4.dev3-py3-none-any.whl
+            name=${file%%-*}                   # noc_shift
             version=${file#*-}; version=${version%%-*}   # 0.4.4.dev3
             echo "${name//_/-}==${version}"
           done > /tmp/constraints.txt
@@ -83,7 +83,7 @@ jobs:
           python -m venv /tmp/smoke
           /tmp/smoke/bin/pip install --constraint /tmp/constraints.txt \
             --find-links dist/core --find-links dist/gnome \
-            gnome-night-shift              # pulls in sun-shift
+            gnome-night-shift              # pulls in noc-shift
           /tmp/smoke/bin/night-shift --version
           /tmp/smoke/bin/night-shift services --help
 
@@ -96,7 +96,7 @@ jobs:
           name: gnome-dist
           path: dist/gnome/
 
-  # Core goes first: gnome-night-shift depends on sun-shift. A job skipped
+  # Core goes first: gnome-night-shift depends on noc-shift. A job skipped
   # because its package wasn't picked still lets the later one run.
   publish-core:
     needs: build

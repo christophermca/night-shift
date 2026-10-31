@@ -14,7 +14,7 @@ PLUGIN_GROUP = "night_shift.commands"
 OPTIONAL_COMMANDS = {"services": "gnome-night-shift"}
 
 try:
-    __version__ = importlib.metadata.version("sun-shift")
+    __version__ = importlib.metadata.version("noc-shift")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 

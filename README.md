@@ -32,8 +32,8 @@ The project is published as two packages:
 
 | Package | What it is |
 |---|---|
-| `sun-shift` | The core and the `night-shift` command |
-| `gnome-night-shift` | `sun-shift` plus the systemd timers (`night-shift services ...`, Linux); what the GNOME extension uses |
+| `noc-shift` | The core and the `night-shift` command |
+| `gnome-night-shift` | `noc-shift` plus the systemd timers (`night-shift services ...`, Linux); what the GNOME extension uses |
 
 ### GNOME
 
@@ -44,7 +44,7 @@ pipx install --system-site-packages gnome-night-shift
 ### Just the command
 
 ```bash
-pipx install --system-site-packages sun-shift
+pipx install --system-site-packages noc-shift
 ```
 
 `--system-site-packages` uses your distro's PyGObject instead of building it.

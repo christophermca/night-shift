@@ -19,10 +19,10 @@ classifiers = [
   "Operating System :: POSIX :: Linux",
   "Environment :: X11 Applications :: Gnome",
 ]
-# PyGObject is listed here as well as in sun-shift so that this package keeps it
+# PyGObject is listed here as well as in noc-shift so that this package keeps it
 # once the GNOME-only parts of the core (GSettings storage, geoclue) move here.
 dependencies = [
-  "sun-shift>=0.4.6,<0.5",
+  "noc-shift>=0.4.6,<0.5",
   "PyGObject>=3.48.0",
 ]
 

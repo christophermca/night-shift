@@ -1,13 +1,13 @@
 name: Publish to PyPI
 
 # Run by hand: Actions tab -> "Publish to PyPI" -> Run workflow, on a commit
-# tagged cli-vX.Y.Z (sun-shift) and/or gnome-vX.Y.Z (gnome-night-shift).
+# tagged cli-vX.Y.Z (noc-shift) and/or gnome-vX.Y.Z (gnome-night-shift).
 # Uploads to PyPI are permanent, so:
 #   - only release versions are uploaded (no .devN / a / b / rc builds), and
 #   - the publish jobs use the `pypi` environment; give it required reviewers
 #     (Settings -> Environments) so every upload waits for your approval.
 # Logs in with PyPI Trusted Publishing: add a pending publisher on pypi.org for
-# each project (sun-shift, gnome-night-shift) with workflow
+# each project (noc-shift, gnome-night-shift) with workflow
 # `publish-pypi.yml` and environment `pypi`.
 on:
   workflow_dispatch:
@@ -68,7 +68,7 @@ jobs:
       - name: Build both packages
         run: |
           python -m pip install --upgrade pip build twine
-          python -m build . --outdir dist/core            # sun-shift
+          python -m build . --outdir dist/core            # noc-shift
           python -m build gnome-night-shift --outdir dist/gnome
           python -m twine check --strict dist/*/*
 
@@ -82,8 +82,8 @@ jobs:
       - name: Smoke-test the built wheels
         run: |
           for wheel in dist/*/*.whl; do
-            file=$(basename "$wheel")          # sun_shift-0.4.4.dev3-py3-none-any.whl
-            name=${file%%-*}                   # sun_shift
+            file=$(basename "$wheel")          # noc_shift-0.4.4.dev3-py3-none-any.whl
+            name=${file%%-*}                   # noc_shift
             version=${file#*-}; version=${version%%-*}   # 0.4.4.dev3
             echo "${name//_/-}==${version}"
           done > /tmp/constraints.txt
@@ -91,7 +91,7 @@ jobs:
           python -m venv /tmp/smoke
           /tmp/smoke/bin/pip install --constraint /tmp/constraints.txt \
             --find-links dist/core --find-links dist/gnome \
-            gnome-night-shift              # pulls in sun-shift
+            gnome-night-shift              # pulls in noc-shift
           /tmp/smoke/bin/night-shift --version
           /tmp/smoke/bin/night-shift services --help
 
@@ -121,7 +121,7 @@ jobs:
           name: gnome-dist
           path: dist/gnome/
 
-  # Core goes first: gnome-night-shift depends on sun-shift. A job skipped
+  # Core goes first: gnome-night-shift depends on noc-shift. A job skipped
   # because its package wasn't picked still lets the later one run.
   publish-core:
     needs: build
