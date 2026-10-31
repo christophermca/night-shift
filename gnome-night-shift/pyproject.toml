@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+authors = [
+  { name="Christopher McAdams", email="mca.christopher@gmail.com" }
+]
+name = "gnome-night-shift"
+
+dynamic = ["version"]
+description = "Switch GNOME between light and dark at sunrise and sunset: systemd timers (`night-shift services`) for the Night Shift extension"
+keywords = ["gnome", "night shift", "dark mode", "sunrise", "sunset", "theme", "systemd"]
+requires-python = ">=3.10"
+readme = "README.md"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Environment :: X11 Applications :: Gnome",
+]
+# PyGObject is listed here as well as in sun-shift so that this package keeps it
+# once the GNOME-only parts of the core (GSettings storage, geoclue) move here.
+dependencies = [
+  "sun-shift>=0.4.6,<0.5",
+  "PyGObject>=3.48.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/christophermca/night-shift"
+"GNOME extension" = "https://github.com/christophermca/gnome-shell-extension-night-shift"
+
+# Adds `night-shift services ...` to the core's command
+[project.entry-points."night_shift.commands"]
+services = "night_shift_services.cli:register"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"night_shift_services" = ["systemd/user/*.timer", "systemd/user/*.service"]
+
+[tool.setuptools_scm]
+root = ".."                    # the git repo is one folder up
+tag_regex = '^gnome-v(?P<version>\d+\.\d+\.\d+)$'
+git_describe_command = "git describe --dirty --tags --long --match 'gnome-v*'"
+local_scheme = "no-local-version"
+fallback_version = "0.0.0"

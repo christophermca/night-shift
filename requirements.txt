@@ -40,8 +40,8 @@ more-itertools==11.2.1
 msgpack==1.2.3
 mypy_extensions==1.1.0
 nh3==0.3.7
--e git+ssh://git@github.com/christophermca/gnome-night-shift.git@1978df0c3416228c759d87b01d5fd6de6ac761d2#egg=night_shift_cli
--e git+ssh://git@github.com/christophermca/gnome-night-shift.git@1978df0c3416228c759d87b01d5fd6de6ac761d2#egg=night_shift_services&subdirectory=services
+-e git+ssh://git@github.com/christophermca/gnome-night-shift.git@1978df0c3416228c759d87b01d5fd6de6ac761d2#egg=sun_shift
+-e git+ssh://git@github.com/christophermca/gnome-night-shift.git@1978df0c3416228c759d87b01d5fd6de6ac761d2#egg=gnome_night_shift&subdirectory=gnome-night-shift
 packaging==26.3
 pathspec==1.1.1
 platformdirs==4.13.5

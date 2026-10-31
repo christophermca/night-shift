@@ -7,14 +7,15 @@ authors = [
   { name="Christopher McAdams", email="mca.christopher@gmail.com" }
 ]
 
-name = "night-shift-cli"
-description = "Get Times of sunrise sunset for provided location"
+name = "sun-shift"
+description = "Shift between light and dark with the sun: sunrise/sunset times and day or night"
 dependencies = ["requests>=2.28.0","argcomplete>=3.7.2","PyGObject>=3.48.0"]
 readme = "README.md"
 requires-python = ">=3.10"
 
 
 dynamic = ["version"]
+keywords = ["sunrise", "sunset", "day night", "dark mode", "night shift", "theme"]
 
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -39,10 +40,6 @@ where = ["src"]
 
 dev = [
   "black", "locust"
-]
-
-services = [
-  "night-shift-services>=0.0.2"
 ]
 
 test = [

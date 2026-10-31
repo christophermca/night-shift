@@ -1,7 +1,7 @@
 import importlib.metadata
 
 try:
-    __version__ = importlib.metadata.version("night_shift_services")
+    __version__ = importlib.metadata.version("gnome-night-shift")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 

@@ -11,10 +11,10 @@ import argcomplete
 import importlib.metadata
 
 PLUGIN_GROUP = "night_shift.commands"
-OPTIONAL_COMMANDS = {"services": "night-shift-cli[services]"}
+OPTIONAL_COMMANDS = {"services": "gnome-night-shift"}
 
 try:
-    __version__ = importlib.metadata.version("night_shift_cli")
+    __version__ = importlib.metadata.version("sun-shift")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 

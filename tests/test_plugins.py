@@ -10,7 +10,7 @@ from night_shift import cli
 @pytest.fixture
 def plugins(monkeypatch):
     """Control which plugins load_commands() sees, whatever this machine has
-    installed (e.g. `pip install -e ./services` registers the real one)."""
+    installed (e.g. `pip install -e ./gnome-night-shift` registers the real one)."""
     installed = []
 
     def entry_points(group):
@@ -59,7 +59,7 @@ def test_missing_plugin_says_how_to_install(argv, plugins):
     with pytest.raises(SystemExit) as exit_info:
         cli.main()
 
-    assert "pip install 'night-shift-cli[services]'" in str(
+    assert "pip install 'gnome-night-shift'" in str(
         exit_info.value.code
     )
 

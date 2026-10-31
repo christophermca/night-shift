@@ -1,5 +1,6 @@
-PROJECT_NAME := night-shift-cli
-SERVICE_NAME := night-shift-services
+PROJECT_NAME := sun-shift
+GNOME_NAME   := gnome-night-shift
+INDEXES      := --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/
 SCHEMA_DIR   := src/night_shift/schemas
 VENV         := venv
 PYTHON       ?= python3
@@ -16,7 +17,7 @@ $(PY):
 .PHONY: dev test test-nocov build rebuild publish-testpypi install install-dev upgrade-dev compile-schema edit-schema
 
 dev: $(PY)
-	$(PY) -m pip install -e ".[test,dev]" -e ./services
+	$(PY) -m pip install -e ".[test,dev]" -e ./gnome-night-shift
 
 test: dev
 	$(PY) -m pytest -c pytest.ini
@@ -26,7 +27,8 @@ test-nocov: dev
 
 build: $(PY)
 	$(PY) -m pip install -U build
-	$(PY) -m build
+	$(PY) -m build . --outdir dist/
+	$(PY) -m build gnome-night-shift --outdir dist/
 
 rebuild:
 	rm -rf dist/
@@ -37,10 +39,10 @@ publish-testpypi: rebuild
 	$(PY) -m twine upload --repository testpypi dist/*
 
 install:
-	$(PY) -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple $(PROJECT_NAME) $(SERVICE_NAME)
+	$(PY) -m pip install $(INDEXES) $(GNOME_NAME)
 
 install-global:
-	sudo pipx install --pip-args="--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple" $(PROJECT_NAME) $(SERVICE_NAME)
+	sudo pipx install --global --system-site-packages --pip-args="$(INDEXES)" $(GNOME_NAME)
 
 install-dev: dev
 

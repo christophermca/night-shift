@@ -28,11 +28,26 @@ Then **Night Shift** will attempt to create a Gsettings Object to store the data
 
 ## Installation
 
-### PIP
+The project is published as two packages:
+
+| Package | What it is |
+|---|---|
+| `sun-shift` | The core and the `night-shift` command |
+| `gnome-night-shift` | `sun-shift` plus the systemd timers (`night-shift services ...`, Linux); what the GNOME extension uses |
+
+### GNOME
 
 ```bash
-pip install night-shift
+pipx install --system-site-packages gnome-night-shift
 ```
+
+### Just the command
+
+```bash
+pipx install --system-site-packages sun-shift
+```
+
+`--system-site-packages` uses your distro's PyGObject instead of building it.
 
 ## Usage
 

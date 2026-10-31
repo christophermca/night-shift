@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[test]" -e ./services
+          python -m pip install -e ".[test]" -e ./gnome-night-shift
 
       - name: Run tests
         run: python -m pytest

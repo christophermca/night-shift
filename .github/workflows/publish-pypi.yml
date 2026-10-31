@@ -1,20 +1,22 @@
 name: Publish to PyPI
 
 # Run by hand: Actions tab -> "Publish to PyPI" -> Run workflow, on a commit
-# tagged cli-vX.Y.Z and/or services-vX.Y.Z. Uploads to PyPI are permanent, so:
+# tagged cli-vX.Y.Z (sun-shift) and/or gnome-vX.Y.Z (gnome-night-shift).
+# Uploads to PyPI are permanent, so:
 #   - only release versions are uploaded (no .devN / a / b / rc builds), and
 #   - the publish jobs use the `pypi` environment; give it required reviewers
 #     (Settings -> Environments) so every upload waits for your approval.
 # Logs in with PyPI Trusted Publishing: add a pending publisher on pypi.org for
-# each project with workflow `publish-pypi.yml` and environment `pypi`.
+# each project (sun-shift, gnome-night-shift) with workflow
+# `publish-pypi.yml` and environment `pypi`.
 on:
   workflow_dispatch:
     inputs:
       package:
         description: "Which package(s) to publish"
         type: choice
-        options: [both, core, services]
-        default: both
+        options: [all, core, gnome]
+        default: all
 
 jobs:
   test:
@@ -40,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[test]" -e ./services
+          python -m pip install -e ".[test]" -e ./gnome-night-shift
 
       - name: Run tests
         run: python -m pytest
@@ -66,30 +68,30 @@ jobs:
       - name: Build both packages
         run: |
           python -m pip install --upgrade pip build twine
-          python -m build . --outdir dist/core
-          python -m build services --outdir dist/services
-          python -m twine check --strict dist/core/* dist/services/*
+          python -m build . --outdir dist/core            # sun-shift
+          python -m build gnome-night-shift --outdir dist/gnome
+          python -m twine check --strict dist/*/*
 
       # Install the freshly built wheels together, the way a user would, so a
-      # version-pin conflict between the two packages fails here, not on PyPI.
+      # version-pin conflict between the packages fails here, not on PyPI.
       #
       # Untagged commits build dev versions (0.4.4.dev3), which pip skips by
       # default. Instead of --pre (pre-releases for *every* package, requests
-      # included), pin our two packages to the exact versions just built: a
+      # included), pin our packages to the exact versions just built: a
       # pin that names a pre-release allows it for that package only.
       - name: Smoke-test the built wheels
         run: |
           for wheel in dist/*/*.whl; do
-            file=$(basename "$wheel")          # night_shift_cli-0.4.4.dev3-py3-none-any.whl
-            name=${file%%-*}                   # night_shift_cli
+            file=$(basename "$wheel")          # sun_shift-0.4.4.dev3-py3-none-any.whl
+            name=${file%%-*}                   # sun_shift
             version=${file#*-}; version=${version%%-*}   # 0.4.4.dev3
             echo "${name//_/-}==${version}"
           done > /tmp/constraints.txt
           cat /tmp/constraints.txt
           python -m venv /tmp/smoke
           /tmp/smoke/bin/pip install --constraint /tmp/constraints.txt \
-            --find-links dist/core --find-links dist/services \
-            "night-shift-cli[services]"
+            --find-links dist/core --find-links dist/gnome \
+            gnome-night-shift              # pulls in sun-shift
           /tmp/smoke/bin/night-shift --version
           /tmp/smoke/bin/night-shift services --help
 
@@ -101,12 +103,11 @@ jobs:
           PACKAGE: ${{ inputs.package }}
         run: |
           case "$PACKAGE" in
-            core)     wheels="dist/core/*.whl" ;;
-            services) wheels="dist/services/*.whl" ;;
-            *)        wheels="dist/*/*.whl" ;;
+            core|gnome) wheels="dist/$PACKAGE/*.whl" ;;
+            *)          wheels="dist/*/*.whl" ;;
           esac
           if ls $wheels | grep -E "\.dev[0-9]+|a[0-9]+-|b[0-9]+-|rc[0-9]+-"; then
-            echo "::error::Not a release build. Tag the commit (cli-vX.Y.Z / services-vX.Y.Z) and run from it."
+            echo "::error::Not a release build. Tag the commit (cli-vX.Y.Z / gnome-vX.Y.Z) and run from it."
             exit 1
           fi
           echo "Release versions only:" && ls $wheels
@@ -117,13 +118,14 @@ jobs:
           path: dist/core/
       - uses: actions/upload-artifact@v7
         with:
-          name: services-dist
-          path: dist/services/
+          name: gnome-dist
+          path: dist/gnome/
 
-  # Core goes first: night-shift-services depends on night-shift-cli.
+  # Core goes first: gnome-night-shift depends on sun-shift. A job skipped
+  # because its package wasn't picked still lets the later one run.
   publish-core:
     needs: build
-    if: inputs.package != 'services'
+    if: inputs.package == 'all' || inputs.package == 'core'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -136,16 +138,15 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           # PyPI refuses a version twice; skip instead of failing, so
-          # "both" works when only one package was given a new tag.
+          # "all" works when only some packages got a new version.
           skip-existing: true
 
-  publish-services:
+  publish-gnome:
     needs: [build, publish-core]
-    # Run after core, or when core was skipped because only services was picked.
     if: >-
       !cancelled() && needs.build.result == 'success'
-      && inputs.package != 'core'
-      && (needs.publish-core.result == 'success' || needs.publish-core.result == 'skipped')
+      && (inputs.package == 'all' || inputs.package == 'gnome')
+      && contains(fromJSON('["success", "skipped"]'), needs.publish-core.result)
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -153,7 +154,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
-          name: services-dist
+          name: gnome-dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
