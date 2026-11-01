@@ -1,4 +1,4 @@
-PROJECT_NAME := noc-shift
+PROJECT_NAME := nocturne-shift
 GNOME_NAME   := gnome-night-shift
 INDEXES      := --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/
 SCHEMA_DIR   := src/night_shift/schemas
