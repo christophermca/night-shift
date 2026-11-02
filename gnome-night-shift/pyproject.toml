@@ -22,7 +22,7 @@ classifiers = [
 # PyGObject is listed here as well as in nocturne-shift so that this package keeps it
 # once the GNOME-only parts of the core (GSettings storage, geoclue) move here.
 dependencies = [
-  "nocturne-shift>=0.4.6,<0.5",
+  "nocturne-shift>=0.5.0",
   "PyGObject>=3.48.0",
 ]
 
