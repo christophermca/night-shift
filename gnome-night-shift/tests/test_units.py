@@ -48,7 +48,7 @@ def test_unit_execstart_is_a_valid_command(
         cli.main()
     except SystemExit as exc:  # argparse exits 2 on an unknown flag
         pytest.fail(
-            f"{unit.name}: night-shift rejected {args}: "
+            f"{unit.name}: nocturne-shift rejected {args}: "
             f"{capsys.readouterr().err.strip()} (exit {exc.code})"
         )
 

@@ -20,7 +20,7 @@ def _compile_schema(schema_path, schema_id) -> Gio.SettingsSchema | None:
 
     except Exception as e:
         print(
-            f"night-shift: settings unavailable, nothing will be saved ({e})",
+            f"nocturne-shift: settings unavailable, nothing will be saved ({e})",
             file=sys.stderr,
         )
 
@@ -62,7 +62,7 @@ class DataStore:
 
         except Exception as e:
             print(
-                f"night-shift: settings unavailable, nothing will be saved ({e})",
+                f"nocturne-shift: settings unavailable, nothing will be saved ({e})",
                 file=sys.stderr,
             )
             self.data = None

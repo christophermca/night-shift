@@ -33,7 +33,7 @@ def load_commands(subparsers) -> dict:
             handlers[entry_point.name] = entry_point.load()(subparsers)
         except Exception as e:  # a broken plugin must not take the core CLI down
             print(
-                f"night-shift: skipping plugin {entry_point.name!r} ({e})",
+                f"nocturne-shift: skipping plugin {entry_point.name!r} ({e})",
                 file=sys.stderr,
             )
 
@@ -52,7 +52,7 @@ def load_commands(subparsers) -> dict:
 
 def _not_installed(name, extra):
     def handler(args):
-        sys.exit(f"night-shift {name} requires: pip install '{extra}'")
+        sys.exit(f"nocturne-shift {name} requires: pip install '{extra}'")
 
     return handler
 
@@ -87,7 +87,7 @@ def run_once(
 def main():
     parser = argparse.ArgumentParser(
         description="Get the times for the sunrise/sunset",
-        prog="night-shift",
+        prog="nocturne-shift",
     )
 
     sub_parsers = parser.add_subparsers(dest="command")

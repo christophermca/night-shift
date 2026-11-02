@@ -166,7 +166,7 @@ class GetTimeOfSunriseSunset:
                 json_string = json.dumps(
                     response_data, indent=4, sort_keys=True
                 )
-                print(f"[night-shift] {json_string}")
+                print(f"[nocturne-shift] {json_string}")
 
             tzid = response_data["tzid"]
             sunrise = datetime.fromisoformat(
@@ -201,7 +201,7 @@ class GetTimeOfSunriseSunset:
     def _save(self, data) -> None:
         if self.settings is None:
             print(
-                f"night-shift: unable to save {', '.join(data)}: settings unavailable",
+                f"nocturne-shift: unable to save {', '.join(data)}: settings unavailable",
                 file=sys.stderr,
             )
             return
@@ -221,7 +221,7 @@ class GetTimeOfSunriseSunset:
 
         if self.settings is None:
             print(
-                "night-shift: no static location: self.settings unavailable",
+                "nocturne-shift: no static location: self.settings unavailable",
                 file=sys.stderr,
             )
             return None

@@ -92,8 +92,8 @@ jobs:
           /tmp/smoke/bin/pip install --constraint /tmp/constraints.txt \
             --find-links dist/core --find-links dist/gnome \
             gnome-night-shift              # pulls in nocturne-shift
-          /tmp/smoke/bin/night-shift --version
-          /tmp/smoke/bin/night-shift services --help
+          /tmp/smoke/bin/nocturne-shift --version
+          /tmp/smoke/bin/nocturne-shift services --help
 
       # PyPI is permanent: only upload versions built from a release tag.
       # Checks just the package(s) being published, so releasing only one

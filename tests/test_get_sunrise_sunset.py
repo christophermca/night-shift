@@ -237,7 +237,7 @@ def test_save_without_settings_says_why(capsys):
     fetcher._save({"tzid": "America/New_York", "times": ("06:52", "18:51")})
 
     assert capsys.readouterr().err == (
-        "night-shift: unable to save tzid, times: settings unavailable\n"
+        "nocturne-shift: unable to save tzid, times: settings unavailable\n"
     )
 
 
@@ -248,4 +248,4 @@ def test_save_errors_go_to_stderr(fetcher, capsys):
 
     captured = capsys.readouterr()
     assert "ERROR SAVING: can't save tzid" in captured.err
-    assert captured.out == ""  # stdout stays clean for `night-shift ... | cmd`
+    assert captured.out == ""  # stdout stays clean for `nocturne-shift ... | cmd`

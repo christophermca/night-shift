@@ -71,5 +71,5 @@ def test_broken_plugin_does_not_break_the_core_cli(argv, plugins, capsys):
     cli.main()
 
     captured = capsys.readouterr()
-    assert "usage: night-shift" in captured.out
+    assert "usage: nocturne-shift" in captured.out
     assert "skipping plugin 'services'" in captured.err

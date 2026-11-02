@@ -19,7 +19,7 @@ class Settings:
 
     `Settings()` returns the Gio.Settings object, or None when the schema
     isn't installed (for example the GNOME extension is missing). Callers
-    must handle None; night-shift keeps working, it just can't save.
+    must handle None; nocturne-shift keeps working, it just can't save.
     """
 
     def __init__(self, data_store: DataStore | None = None):

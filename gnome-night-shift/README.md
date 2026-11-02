@@ -3,14 +3,14 @@
 The helper for the [Night Shift GNOME extension](https://github.com/christophermca/gnome-shell-extension-night-shift):
 it switches GNOME between light and dark at sunrise and sunset.
 
-It installs [`nocturne-shift`](https://pypi.org/project/nocturne-shift/) (the `night-shift`
-command) and adds the systemd timers that run it, as `night-shift services`:
+It installs [`nocturne-shift`](https://pypi.org/project/nocturne-shift/) (the `nocturne-shift`
+command) and adds the systemd timers that run it, as `nocturne-shift services`:
 
 ```sh
-night-shift services setup [SCHEMA_PATH]   # link and start the timers
-night-shift services stop
-night-shift services start
-night-shift services teardown              # stop and remove the timers
+nocturne-shift services setup [SCHEMA_PATH]   # link and start the timers
+nocturne-shift services stop
+nocturne-shift services start
+nocturne-shift services teardown              # stop and remove the timers
 ```
 
 ## Install

@@ -29,6 +29,8 @@ classifiers = [
 Homepage = "https://github.com/christophermca/night-shift"
 
 [project.scripts]
+nocturne-shift = "night_shift:main"
+# Old name, kept until the GNOME extension calls nocturne-shift. Remove then.
 night-shift = "night_shift:main"
 
 [tool.setuptools]

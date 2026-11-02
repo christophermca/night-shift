@@ -14,8 +14,8 @@ def services_class():
 
 
 def run_services(*args):
-    """Parse like night-shift does, then call the handler register() returned."""
-    parser = argparse.ArgumentParser(prog="night-shift")
+    """Parse like nocturne-shift does, then call the handler register() returned."""
+    parser = argparse.ArgumentParser(prog="nocturne-shift")
     handler = register(parser.add_subparsers(dest="command"))
     return handler(parser.parse_args(["services", *args]))
 
@@ -42,6 +42,6 @@ def test_subcommands(services_class, subcommand, method):
 def test_bare_services_prints_help_and_does_nothing(services_class, capsys):
     result = run_services()
 
-    assert "usage: night-shift services" in capsys.readouterr().out
+    assert "usage: nocturne-shift services" in capsys.readouterr().out
     assert result is None  # main() returns None
     services_class.assert_not_called()

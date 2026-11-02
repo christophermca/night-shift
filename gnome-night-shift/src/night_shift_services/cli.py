@@ -7,11 +7,11 @@ except importlib.metadata.PackageNotFoundError:
 
 
 def register(subparsers):
-    """Entry point for night-shift: add the `services` command, return its handler."""
+    """Entry point for nocturne-shift: add the `services` command, return its handler."""
     services_parser = setup_arguments(subparsers)
 
     def handler(args):
-        if args.subcommand is None:  # bare `night-shift services`
+        if args.subcommand is None:  # bare `nocturne-shift services`
             services_parser.print_help()
             return None  # nothing was done
         return run(args)
@@ -36,7 +36,7 @@ def run(args):
 def setup_arguments(subparsers):
     services_parser = subparsers.add_parser(
         "services",
-        prog="night-shift services",
+        prog="nocturne-shift services",
         help="Handle Night-Shift Service",
     )
 
@@ -49,7 +49,7 @@ def setup_arguments(subparsers):
 
     action_parser = services_parser.add_subparsers(
         dest="subcommand",
-        prog="night-shift services",
+        prog="nocturne-shift services",
     )
 
     stop_action_parser = action_parser.add_parser(

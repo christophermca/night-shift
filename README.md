@@ -2,14 +2,14 @@
 
 Night Shift will lookup the time of the sunrise and sunset for the provided location.
 
-- night-shift can also check if the current state of the 24hr period is day or night
-- night-shift Services
+- `nocturne-shift` can also check if the current state of the 24hr period is day or night
+- `nocturne-shift services`: systemd timers (with `gnome-night-shift`)
 
 
 ## Features
 
 * Use geoclue to determine location. Requires Location services to be enabled. **(Settings > Privacy & Security > Location > Enable "Automatic Device Location"**
-* Run night-shift as a systemd service.
+* Run `nocturne-shift` as a systemd service.
 
 ## How It Works
 
@@ -22,7 +22,7 @@ Then **Night Shift** will attempt to create a Gsettings Object to store the data
 - Python 3.10+
 - GLib / GSettings and PyGObject (usually installed with your desktop; on Debian/Ubuntu: `python3-gi`)
 - `glib-compile-schemas` to compile the schema (Debian/Ubuntu: `libglib2.0-bin`)
-- Optional: systemd (Linux) for `night-shift services`
+- Optional: systemd (Linux) for `nocturne-shift services`
 - Optional: GeoClue for `-g`
 
 
@@ -32,8 +32,8 @@ The project is published as two packages:
 
 | Package | What it is |
 |---|---|
-| `nocturne-shift` | The core and the `night-shift` command |
-| `gnome-night-shift` | `nocturne-shift` plus the systemd timers (`night-shift services ...`, Linux); what the GNOME extension uses |
+| `nocturne-shift` | The core and the `nocturne-shift` command |
+| `gnome-night-shift` | `nocturne-shift` plus the systemd timers (`nocturne-shift services ...`, Linux); what the GNOME extension uses |
 
 ### GNOME
 
@@ -51,29 +51,32 @@ pipx install --system-site-packages nocturne-shift
 
 ## Usage
 
+`night-shift` still works as an old name for the same command, for now.
 
 ```sh
-usage: night-shift [-h] [-c] [-f] [-g] [-v] [--install-systemd-units]
-                   [--remove-systemd-units]
-                   [latitude] [longitude]
+usage: nocturne-shift [-h] [--lat [LATITUDE]] [--lng [LONGITUDE]]
+                      [-c [SCHEMA_PATH]] [-f] [-g] [-w [SCHEMA_PATH]] [-v]
+                      [--version]
+                      {services} ...
 
 Get the times for the sunrise/sunset
 
 positional arguments:
-  latitude              compares current time with sunrise/sunset time
-  longitude             compares current time with sunrise/sunset time
+  {services}
+    services            Handle Night-Shift Service
 
 options:
   -h, --help            show this help message and exit
-  -c, --check-now       compares current time with sunrise/sunset time
+  --lat [LATITUDE]      compares current time with sunrise/sunset time
+  --lng [LONGITUDE]     compares current time with sunrise/sunset time
+  -c [SCHEMA_PATH], --check-now [SCHEMA_PATH]
+                        compares current time with sunrise/sunset time
   -f, --force           ignores cached data
   -g, --geoclue         use geoclue to determine location
-  -v, --verbose         Prints all data
-  --install-systemd-units
-                        Linux-only: Deploy optional systemd units
-  --remove-systemd-units
-                        Linux-only: Remove optional systemd units
-
+  -w [SCHEMA_PATH], --watch [SCHEMA_PATH]
+                        watch for changes in data_store
+  -v, --verbose         Prints more information
+  --version             Prints more information
 ```
 
 ## Source Code

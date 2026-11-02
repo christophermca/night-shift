@@ -46,7 +46,7 @@ def mock_settings():
 @pytest.fixture
 def argv(monkeypatch):
     def set_args(*args):
-        monkeypatch.setattr("sys.argv", ["night-shift", *args])
+        monkeypatch.setattr("sys.argv", ["nocturne-shift", *args])
 
     return set_args
 

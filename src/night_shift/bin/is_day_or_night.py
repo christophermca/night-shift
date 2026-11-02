@@ -24,7 +24,7 @@ def is_day_or_night(
     if times is None:
         if settings is None:
             raise AttributeError(
-                "night-shift: unable to check `day or night`. settings is None"
+                "nocturne-shift: unable to check `day or night`. settings is None"
             )
             return
 
@@ -51,7 +51,7 @@ def is_day_or_night(
         settings.set("day-or-night", DAY_NIGHT)
     except Exception as e:
         print(
-            "night-shift: unable to save day-or-night: settings unavailable",
+            "nocturne-shift: unable to save day-or-night: settings unavailable",
             file=sys.stderr,
         )
 
