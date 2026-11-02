@@ -17,7 +17,7 @@ $(PY):
 .PHONY: dev test test-nocov build rebuild publish-testpypi install install-dev upgrade-dev compile-schema edit-schema
 
 dev: $(PY)
-	$(PY) -m pip install -e ".[test,dev]" -e ./gnome-night-shift
+	$(PY) -m pip install -e ".[test, dev]" -e ./gnome-night-shift
 
 test: dev
 	$(PY) -m pytest -c pytest.ini
