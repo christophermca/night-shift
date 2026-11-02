@@ -7,14 +7,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 from gi.repository import Gio, GLib
 
-import night_shift
-from night_shift import data_store
-from night_shift.data_store import DataStore
-from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
-from night_shift.bin.settings import Settings
+import nocturne_shift
+from nocturne_shift import data_store
+from nocturne_shift.data_store import DataStore
+from nocturne_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
+from nocturne_shift.bin.settings import Settings
 
 SCHEMA_XML = next(
-    (Path(night_shift.__file__).parent / "schemas").glob("*.gschema.xml")
+    (Path(nocturne_shift.__file__).parent / "schemas").glob("*.gschema.xml")
 )
 
 
@@ -73,7 +73,7 @@ def test_set_rejects_unsupported_types(store):
         store.set("times", ["06:52", "18:51"])
 
 
-@patch("night_shift.bin.get_sunrise_sunset.requests.get")
+@patch("nocturne_shift.bin.get_sunrise_sunset.requests.get")
 def test_fetched_times_are_saved_through_settings(mock_get, store, capsys):
     """The -w path end to end: fetch -> _save -> Settings -> DataStore."""
     response = MagicMock()

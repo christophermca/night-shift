@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import ANY, patch
 
-from night_shift import cli
+from nocturne_shift import cli
 
 TIMES = ("06:52", "18:51")
 
@@ -9,28 +9,28 @@ TIMES = ("06:52", "18:51")
 @pytest.fixture
 def mock_fetcher():
     with patch(
-        "night_shift.cli.GetTimeOfSunriseSunset", autospec=True
+        "nocturne_shift.cli.GetTimeOfSunriseSunset", autospec=True
     ) as fetcher:
         yield fetcher
 
 
 @pytest.fixture
 def mock_check():
-    with patch("night_shift.cli.check") as check:
+    with patch("nocturne_shift.cli.check") as check:
         yield check
 
 
 @pytest.fixture(autouse=True)
 def settings_class():
     """main() builds one Settings per run; fake it so no test touches GSettings."""
-    with patch("night_shift.cli.Settings") as settings_class:
+    with patch("nocturne_shift.cli.Settings") as settings_class:
         yield settings_class
 
 
 @pytest.fixture(autouse=True)
 def data_store_class():
     """-w / -c SCHEMA_PATH build a DataStore; fake it so no schema is compiled."""
-    with patch("night_shift.cli.DataStore") as data_store_class:
+    with patch("nocturne_shift.cli.DataStore") as data_store_class:
         yield data_store_class
 
 
@@ -86,7 +86,7 @@ def test_non_numeric_coordinate_is_a_usage_error(argv, mock_fetcher, capsys):
 def test_given_check_now_fails_throws_error(argv, settings_class, capsys):
     argv("--check-now")
     with patch(
-        "night_shift.cli.is_day_or_night",
+        "nocturne_shift.cli.is_day_or_night",
     ) as fn:
 
         fn.side_effect = AttributeError()
@@ -193,7 +193,7 @@ def test_no_args_prints_help(argv, mock_fetcher, capsys):
 def test_check_passes_times_and_settings_through_and_returns_none():
     settings = object()
 
-    with patch("night_shift.cli.is_day_or_night", autospec=True) as fn:
+    with patch("nocturne_shift.cli.is_day_or_night", autospec=True) as fn:
         result = cli.check(TIMES, settings)
 
     fn.assert_called_once_with(TIMES, settings, 0)
@@ -201,7 +201,7 @@ def test_check_passes_times_and_settings_through_and_returns_none():
 
 
 def test_check_without_times_uses_saved_times():
-    with patch("night_shift.cli.is_day_or_night", autospec=True) as fn:
+    with patch("nocturne_shift.cli.is_day_or_night", autospec=True) as fn:
         cli.check()
 
     fn.assert_called_once_with(None, None, 0)
@@ -237,7 +237,7 @@ def test_run_once_catches_check_errors(mock_fetcher, capsys):
     mock_fetcher.return_value.times = ("06:52", "18:51")
 
     with patch(
-        "night_shift.cli.check", side_effect=AttributeError("no schema")
+        "nocturne_shift.cli.check", side_effect=AttributeError("no schema")
     ) as check:
         cli.run_once(check_now=None)
 
@@ -264,7 +264,7 @@ def test_verbose_reaches_is_day_or_night(argv, mock_fetcher, args):
     mock_fetcher.return_value.return_value = TIMES  # sunrise_sunset(coords)
     mock_fetcher.return_value.times = TIMES  # run_once reads .times
 
-    with patch("night_shift.cli.is_day_or_night", autospec=True) as fn:
+    with patch("nocturne_shift.cli.is_day_or_night", autospec=True) as fn:
         cli.main()
 
     # autospec matches by signature, so this passes however check() spells the call

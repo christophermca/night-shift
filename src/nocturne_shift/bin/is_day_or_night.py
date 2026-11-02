@@ -2,7 +2,7 @@
 
 import sys
 
-from night_shift.bin.settings import Settings
+from .settings import Settings
 from datetime import datetime
 
 

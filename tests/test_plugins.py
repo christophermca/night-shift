@@ -4,7 +4,7 @@ import types
 
 import pytest
 
-from night_shift import cli
+from nocturne_shift import cli
 
 
 @pytest.fixture

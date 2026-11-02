@@ -11,7 +11,7 @@ import requests
 
 from collections import namedtuple
 from typing import Any
-from night_shift.bin.settings import Settings
+from .settings import Settings
 from datetime import datetime
 
 gi.require_version("Gio", "2.0")

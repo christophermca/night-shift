@@ -11,7 +11,7 @@ except ModuleNotFoundError:  # Python 3.10: the same parser, as a package
 import pytest
 
 import night_shift_services
-from night_shift import cli
+from nocturne_shift import cli
 from night_shift_services import Services
 
 UNIT_DIR = Path(night_shift_services.__file__).parent / "systemd" / "user"

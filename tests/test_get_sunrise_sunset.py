@@ -4,8 +4,8 @@ from unittest.mock import Mock, patch, MagicMock, create_autospec
 import subprocess
 import requests
 from gi.repository import Gio, GLib
-from night_shift.bin.settings import Settings
-from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
+from nocturne_shift.bin.settings import Settings
+from nocturne_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
 
 REAL_POPEN = subprocess.Popen
 AGENT_CMD = ["/usr/lib/geoclue-2.0/demos/agent"]
@@ -36,7 +36,7 @@ def fake_process(output=""):
 
 @pytest.fixture
 def popen():
-    with patch("night_shift.bin.get_sunrise_sunset.subprocess.Popen") as popen:
+    with patch("nocturne_shift.bin.get_sunrise_sunset.subprocess.Popen") as popen:
         yield popen
 
 
@@ -81,9 +81,9 @@ API_PAYLOAD = {
 
 
 @patch(
-    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
+    "nocturne_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
 )
-@patch("night_shift.bin.get_sunrise_sunset.requests.get")
+@patch("nocturne_shift.bin.get_sunrise_sunset.requests.get")
 class TestGetSunriseSunset:
     settings = None
 
@@ -189,9 +189,9 @@ class TestGetSunriseSunsetGetLocation:
 
 
 @patch(
-    "night_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
+    "nocturne_shift.bin.get_sunrise_sunset.GetTimeOfSunriseSunset._get_location"
 )
-@patch("night_shift.bin.get_sunrise_sunset.requests.get")
+@patch("nocturne_shift.bin.get_sunrise_sunset.requests.get")
 class TestSettingsIsSet:
 
     def test_when_geoclue_is_None_and_settings_is_set(
@@ -220,7 +220,7 @@ class TestSettingsIsSet:
         assert fake_settings.data_store["tzid"] == "America/New_York"
 
 
-@patch("night_shift.bin.get_sunrise_sunset.requests.get")
+@patch("nocturne_shift.bin.get_sunrise_sunset.requests.get")
 def test_http_errors_are_reported_as_http_errors(mock_get, fetcher, capsys):
     mock_get.return_value.raise_for_status.side_effect = (
         requests.exceptions.HTTPError("500 Server Error")

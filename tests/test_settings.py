@@ -3,8 +3,8 @@ from unittest.mock import create_autospec, patch
 import re
 import pytest
 
-from night_shift.bin.settings import DEFAULT_SCHEMA_PATH, Settings
-from night_shift.data_store import DataStore
+from nocturne_shift.bin.settings import DEFAULT_SCHEMA_PATH, Settings
+from nocturne_shift.data_store import DataStore
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def test_uses_the_data_store_it_is_given(store):
 
 
 def test_builds_a_default_data_store_when_none_is_given():
-    with patch("night_shift.bin.settings.DataStore") as data_store_class:
+    with patch("nocturne_shift.bin.settings.DataStore") as data_store_class:
         settings = Settings()
 
     data_store_class.assert_called_once_with(DEFAULT_SCHEMA_PATH)

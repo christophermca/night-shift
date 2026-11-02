@@ -13,18 +13,18 @@ def argv(monkeypatch):
 
 @pytest.fixture
 def mock_fetcher():
-    with patch("night_shift.cli.GetTimeOfSunriseSunset", autospec=True) as fetcher:
+    with patch("nocturne_shift.cli.GetTimeOfSunriseSunset", autospec=True) as fetcher:
         yield fetcher
 
 
 @pytest.fixture
 def mock_check():
-    with patch("night_shift.cli.check") as check:
+    with patch("nocturne_shift.cli.check") as check:
         yield check
 
 
 @pytest.fixture(autouse=True)
 def _no_real_settings():
     """The core CLI builds Settings/DataStore; fake them so nothing touches GSettings."""
-    with patch("night_shift.cli.Settings"), patch("night_shift.cli.DataStore"):
+    with patch("nocturne_shift.cli.Settings"), patch("nocturne_shift.cli.DataStore"):
         yield

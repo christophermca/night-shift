@@ -1,7 +1,7 @@
 PROJECT_NAME := nocturne-shift
 GNOME_NAME   := gnome-night-shift
 INDEXES      := --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/
-SCHEMA_DIR   := src/night_shift/schemas
+SCHEMA_DIR   := src/nocturne_shift/schemas
 VENV         := venv
 PYTHON       ?= python3
 PY           := $(VENV)/bin/python
@@ -17,7 +17,7 @@ $(PY):
 .PHONY: dev test test-nocov build rebuild publish-testpypi install install-dev upgrade-dev compile-schema edit-schema
 
 dev: $(PY)
-	$(PY) -m pip install -e $(PROJECT_NAME)["test", "dev"] -e ./gnome-night-shift
+	$(PY) -m pip install -e ".[test,dev]" -e ./gnome-night-shift
 
 test: dev
 	$(PY) -m pytest -c pytest.ini

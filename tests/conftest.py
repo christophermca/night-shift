@@ -24,7 +24,7 @@ def _no_network(monkeypatch):
 @pytest.fixture(autouse=True)
 def _patch_settings(mock_settings):
     with patch(
-        "night_shift.bin.get_sunrise_sunset.Settings"
+        "nocturne_shift.bin.get_sunrise_sunset.Settings"
     ) as mock_settings_class:
         mock_settings_class.return_value.return_value = mock_settings
         yield mock_settings_class
