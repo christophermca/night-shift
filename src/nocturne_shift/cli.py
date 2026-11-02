@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # PYTHON_ARG_COMPLETE_OK
-from night_shift.bin.get_sunrise_sunset import GetTimeOfSunriseSunset
-from night_shift.bin.is_day_or_night import is_day_or_night
-from night_shift.bin.settings import Settings
+from .bin.get_sunrise_sunset import GetTimeOfSunriseSunset
+from .bin.is_day_or_night import is_day_or_night
+from .bin.settings import Settings
 from .data_store import DataStore
 
 import sys
@@ -31,7 +31,9 @@ def load_commands(subparsers) -> dict:
     for entry_point in importlib.metadata.entry_points(group=PLUGIN_GROUP):
         try:
             handlers[entry_point.name] = entry_point.load()(subparsers)
-        except Exception as e:  # a broken plugin must not take the core CLI down
+        except (
+            Exception
+        ) as e:  # a broken plugin must not take the core CLI down
             print(
                 f"nocturne-shift: skipping plugin {entry_point.name!r} ({e})",
                 file=sys.stderr,

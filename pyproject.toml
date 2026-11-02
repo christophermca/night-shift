@@ -16,7 +16,7 @@ requires-python = ">=3.10"
 
 
 dynamic = ["version"]
-keywords = ["sunrise", "sunset", "day night", "dark mode", "night shift", "theme"]
+keywords = ["sunrise", "sunset", "day night", "dark mode", "night shift", "dark theme switcher"]
 
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -29,9 +29,9 @@ classifiers = [
 Homepage = "https://github.com/christophermca/night-shift"
 
 [project.scripts]
-nocturne-shift = "night_shift:main"
+nocturne-shift = "nocturne_shift:main"
 # Old name, kept until the GNOME extension calls nocturne-shift. Remove then.
-night-shift = "night_shift:main"
+night-shift = "nocturne_shift:main"
 
 [tool.setuptools]
 include-package-data = true

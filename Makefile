@@ -17,7 +17,7 @@ $(PY):
 .PHONY: dev test test-nocov build rebuild publish-testpypi install install-dev upgrade-dev compile-schema edit-schema
 
 dev: $(PY)
-	$(PY) -m pip install -e ".[test,dev]" -e ./gnome-night-shift
+	$(PY) -m pip install -e $(PROJECT_NAME)["test", "dev"] -e ./gnome-night-shift
 
 test: dev
 	$(PY) -m pytest -c pytest.ini
@@ -39,10 +39,10 @@ publish-testpypi: rebuild
 	$(PY) -m twine upload --repository testpypi dist/*
 
 install:
-	$(PY) -m pip install $(INDEXES) $(GNOME_NAME)
+	$(PY) -m pip install $(INDEXES) $(PROJECT_NAME) $(GNOME_NAME)
 
 install-global:
-	sudo pipx install --global --system-site-packages --pip-args="$(INDEXES)" $(GNOME_NAME)
+	sudo pipx install --global --system-site-packages --pip-args="$(INDEXES)" $(PROJECT_NAME) $(GNOME_NAME)
 
 install-dev: dev
 
