@@ -28,12 +28,12 @@ Then **Night Shift** will attempt to create a Gsettings Object to store the data
 
 ## Installation
 
-The project is published as two packages:
+Two packages; this repo is the core:
 
 | Package | What it is |
 |---|---|
 | `nocturne-shift` | The core and the `nocturne-shift` command |
-| `gnome-night-shift` | extends nocturne-shift to include services https://github.com/christophermca/gnome-night-shift
+| [`gnome-night-shift`](https://github.com/christophermca/gnome-night-shift) | `nocturne-shift` plus the systemd timers (`nocturne-shift services ...`, Linux); what the GNOME extension uses. Lives in its own repo |
 
 ### GNOME
 
