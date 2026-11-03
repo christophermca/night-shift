@@ -1,7 +1,7 @@
 name: Publish to PyPI
 
 # Run by hand: Actions tab -> "Publish to PyPI" -> Run workflow, on a commit
-# tagged cli-vX.Y.Z (nocturne-shift) and/or gnome-vX.Y.Z (gnome-night-shift).
+# tagged cli-vX.Y.Z (nocturne-shift)
 # Uploads to PyPI are permanent, so:
 #   - only release versions are uploaded (no .devN / a / b / rc builds), and
 #   - the publish jobs use the `pypi` environment; give it required reviewers
@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[test]" -e ./gnome-night-shift
+          python -m pip install -e ".[test]"
 
       - name: Run tests
         run: python -m pytest
@@ -69,7 +69,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip build twine
           python -m build . --outdir dist/core            # nocturne-shift
-          python -m build gnome-night-shift --outdir dist/gnome
           python -m twine check --strict dist/*/*
 
       # Install the freshly built wheels together, the way a user would, so a
@@ -90,10 +89,9 @@ jobs:
           cat /tmp/constraints.txt
           python -m venv /tmp/smoke
           /tmp/smoke/bin/pip install --constraint /tmp/constraints.txt \
-            --find-links dist/core --find-links dist/gnome \
-            gnome-night-shift              # pulls in nocturne-shift
+            --find-links dist/core --find-links dist/core \
+            nocturne-shift              # pulls in nocturne-shift
           /tmp/smoke/bin/nocturne-shift --version
-          /tmp/smoke/bin/nocturne-shift services --help
 
       # PyPI is permanent: only upload versions built from a release tag.
       # Checks just the package(s) being published, so releasing only one
@@ -102,10 +100,6 @@ jobs:
         env:
           PACKAGE: ${{ inputs.package }}
         run: |
-          case "$PACKAGE" in
-            core|gnome) wheels="dist/$PACKAGE/*.whl" ;;
-            *)          wheels="dist/*/*.whl" ;;
-          esac
           if ls $wheels | grep -E "\.dev[0-9]+|a[0-9]+-|b[0-9]+-|rc[0-9]+-"; then
             echo "::error::Not a release build. Tag the commit (cli-vX.Y.Z / gnome-vX.Y.Z) and run from it."
             exit 1
@@ -116,16 +110,11 @@ jobs:
         with:
           name: core-dist
           path: dist/core/
-      - uses: actions/upload-artifact@v7
-        with:
-          name: gnome-dist
-          path: dist/gnome/
 
   # Core goes first: gnome-night-shift depends on nocturne-shift. A job skipped
   # because its package wasn't picked still lets the later one run.
   publish-core:
     needs: build
-    if: inputs.package == 'all' || inputs.package == 'core'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -139,23 +128,4 @@ jobs:
         with:
           # PyPI refuses a version twice; skip instead of failing, so
           # "all" works when only some packages got a new version.
-          skip-existing: true
-
-  publish-gnome:
-    needs: [build, publish-core]
-    if: >-
-      !cancelled() && needs.build.result == 'success'
-      && (inputs.package == 'all' || inputs.package == 'gnome')
-      && contains(fromJSON('["success", "skipped"]'), needs.publish-core.result)
-    runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          name: gnome-dist
-          path: dist/
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
           skip-existing: true

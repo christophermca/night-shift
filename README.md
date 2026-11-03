@@ -33,7 +33,7 @@ The project is published as two packages:
 | Package | What it is |
 |---|---|
 | `nocturne-shift` | The core and the `nocturne-shift` command |
-| `gnome-night-shift` | `nocturne-shift` plus the systemd timers (`nocturne-shift services ...`, Linux); what the GNOME extension uses |
+| `gnome-night-shift` | extends nocturne-shift to include services https://github.com/christophermca/gnome-night-shift
 
 ### GNOME
 

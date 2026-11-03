@@ -37,10 +37,10 @@ publish-testpypi: rebuild
 	$(PY) -m twine upload --repository testpypi dist/*
 
 install:
-	$(PY) -m pip install $(INDEXES) $(PROJECT_NAME) $(GNOME_NAME)
+	$(PY) -m pip install $(INDEXES) $(PROJECT_NAME)
 
 install-global:
-	sudo pipx install --global --system-site-packages --pip-args="$(INDEXES)" $(PROJECT_NAME) $(GNOME_NAME)
+	sudo pipx install --global --system-site-packages --pip-args="$(INDEXES)" $(PROJECT_NAME)
 
 install-dev: dev
 
