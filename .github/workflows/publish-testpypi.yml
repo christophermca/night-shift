@@ -8,9 +8,6 @@ name: Publish to TestPyPI
 # https://github.com/christophermca/gnome-night-shift
 on:
   workflow_dispatch:
-    inputs:
-      package:
-        description: "Which package(s) to publish"
 
 jobs:
   test:
