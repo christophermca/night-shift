@@ -2,7 +2,7 @@ name: Publish to TestPyPI
 
 # Run by hand: Actions tab -> "Publish to TestPyPI" -> Run workflow.
 # Logs in with Trusted Publishing: the nocturne-shift project on test.pypi.org
-# needs a publisher with repository christophermca/night-shift, workflow
+# needs a publisher with repository christophermca/nocturne-shift, workflow
 # `publish-testpypi.yml` and environment `test-pypi`.
 # gnome-night-shift is published from its own repo:
 # https://github.com/christophermca/gnome-night-shift

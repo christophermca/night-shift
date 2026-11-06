@@ -7,7 +7,7 @@ name: Publish to PyPI
 #   - the publish jobs use the `pypi` environment; give it required reviewers
 #     (Settings -> Environments) so every upload waits for your approval.
 # Logs in with PyPI Trusted Publishing: add a pending publisher on pypi.org for
-# nocturne-shift with repository christophermca/night-shift, workflow
+# nocturne-shift with repository christophermca/nocturne-shift, workflow
 # `publish-pypi.yml` and environment `pypi`.
 # gnome-night-shift is published from its own repo:
 # https://github.com/christophermca/gnome-night-shift
