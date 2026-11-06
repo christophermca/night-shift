@@ -1,5 +1,9 @@
 PROJECT_NAME := nocturne-shift
-INDEXES      := --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/
+# INDEXES      := --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/
++TESTPYPI     := https://test.pypi.org/simple/
++WHEELS       := build/testpypi-wheels
++# Pin a version with: make install NOCTURNE_SHIFT=nocturne-shift==0.5.3
++NOCTURNE_SHIFT ?= nocturne-shift
 SCHEMA_DIR   := src/nocturne_shift/schemas
 VENV         := venv
 PYTHON       ?= python3
@@ -13,7 +17,8 @@ $(PY):
 	$(PYTHON) -m venv --system-site-packages $(VENV)
 	$(PY) -m pip install -U pip
 
-.PHONY: dev test test-nocov build rebuild publish-testpypi install install-dev upgrade-dev compile-schema edit-schema
+# .PHONY: dev test test-nocov build rebuild publish-testpypi install install-dev upgrade-dev compile-schema edit-schema
+.PHONY: dev test test-nocov build rebuild publish-testpypi testpypi-wheels install install-dev upgrade-dev compile-schema edit-schema
 
 dev: $(PY)
 	$(PY) -m pip install -e ".[test, dev]"
@@ -36,11 +41,22 @@ publish-testpypi: rebuild
 	$(PY) -m pip install -U twine
 	$(PY) -m twine upload --repository testpypi dist/*
 
-install:
-	$(PY) -m pip install $(INDEXES) $(PROJECT_NAME)
+testpypi-wheels: $(PY)
+	rm -rf $(WHEELS)
+	$(PY) -m pip download --no-deps --only-binary=:all: \
+		--index-url $(TESTPYPI) --dest $(WHEELS) "$(NOCTURNE_SHIFT)"
 
-install-global:
-	sudo pipx install --global --system-site-packages --pip-args="$(INDEXES)" $(PROJECT_NAME)
+# Install the downloaded wheel file; its dependencies come from PyPI only
+install: testpypi-wheels
+	$(PY) -m pip install $(WHEELS)/nocturne_shift-*.whl
+
+# install:
+# 	$(PY) -m pip install $(INDEXES) $(PROJECT_NAME)
+
+# install-global:
+# 	sudo pipx install --global --system-site-packages --pip-args="$(INDEXES)" $(PROJECT_NAME)
+install-global: testpypi-wheels
+	sudo pipx install --global --system-site-packages $(abspath $(WHEELS))/nocturne_shift-*.whl
 
 install-dev: dev
 
