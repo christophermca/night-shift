@@ -77,9 +77,6 @@ options:
   --version             Prints more information
 ```
 
-## Source Code
-
-* GitHub: https://github.com/christophermca/nocturne-shift
 
 [![Publish to PyPI](https://github.com/christophermca/nocturne-shift/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/christophermca/nocturne-shift/actions/workflows/publish-pypi.yml)
 
