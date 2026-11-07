@@ -18,6 +18,8 @@ gi.require_version("Gio", "2.0")
 from gi.repository import GLib
 
 NOAA = "https://api.sunrise-sunset.org/v2"
+ACCURACY_LEVEL_CITY = 4
+TIME_THRESHOLD = 3
 
 
 class GetTimeOfSunriseSunset:
@@ -71,8 +73,9 @@ class GetTimeOfSunriseSunset:
             geoclue_data = subprocess.Popen(
                 [
                     "/usr/lib/geoclue-2.0/demos/where-am-i",
-                    "--accuracy-level=8",
-                    "--time-threshold=3",
+                    # Popen takes strings only: an int raises TypeError
+                    f"--accuracy-level={ACCURACY_LEVEL_CITY}",
+                    f"--time-threshold={TIME_THRESHOLD}",
                 ],  # `run /usr/lib/geoclue-2.0/demo/where-am-i -h` for more information about options
                 text=True,
                 stdout=subprocess.PIPE,
@@ -154,10 +157,10 @@ class GetTimeOfSunriseSunset:
         self, lat: float, lng: float, verbose: int
     ) -> tuple[float, float]:
         try:
-            params = {"lat": lat, "lng": lng}
+            params = {"lat": round(lat, 2), "lng": round(lng, 2)}
 
             # Handle response
-            response = requests.get(NOAA, params)
+            response = requests.get(NOAA, params, timeout=(5, 15))
             response.raise_for_status()
 
             response_data = response.json()
@@ -192,11 +195,14 @@ class GetTimeOfSunriseSunset:
             return times
 
         except requests.exceptions.HTTPError as http_err:
-            print(f"HTTP error occurred (e.g., 404, 500): {http_err}")
+            # Only the status: str(http_err) includes the URL, with lat/lng.
+            # getattr: an HTTPError raised without a response has .response None
+            status = getattr(http_err.response, "status_code", "no response")
+            print(f"HTTP error occurred (e.g., 404, 500): {status}")
         except (
             Exception
         ) as e:  # Generic Exception must go last becuase it will catch any exception
-            print(f" Generic: {e}")
+            print(type(e).__name__)
 
     def _save(self, data) -> None:
         if self.settings is None:

@@ -1,6 +1,6 @@
-# Night Shift
+# Nocturne Shift
 
-Night Shift will lookup the time of the sunrise and sunset for the provided location.
+Nocturne Shift will lookup the time of the sunrise and sunset for the provided location.
 
 - `nocturne-shift` can also check if the current state of the 24hr period is day or night
 - `nocturne-shift services`: systemd timers (with `gnome-night-shift`)
@@ -51,8 +51,6 @@ pipx install --system-site-packages nocturne-shift
 
 ## Usage
 
-`night-shift` still works as an old name for the same command, for now.
-
 ```sh
 usage: nocturne-shift [-h] [--lat [LATITUDE]] [--lng [LONGITUDE]]
                       [-c [SCHEMA_PATH]] [-f] [-g] [-w [SCHEMA_PATH]] [-v]
@@ -83,4 +81,4 @@ options:
 
 * GitHub: https://github.com/christophermca/nocturne-shift
 
-[![Publish to TestPyPI](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml/badge.svg?branch=dev&event=workflow_dispatch)](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml)
+[![Publish to TestPyPI](https://github.com/christophermca/nocturne-shift/actions/workflows/publish-testpypi.yml/badge.svg?branch=dev&event=workflow_dispatch)](https://github.com/christophermca/nocturne-shift/actions/workflows/publish-testpypi.yml)

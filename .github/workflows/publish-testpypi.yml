@@ -1,4 +1,6 @@
 name: Publish to TestPyPI
+permissions:
+  contents: read
 
 # Run by hand: Actions tab -> "Publish to TestPyPI" -> Run workflow.
 # Logs in with Trusted Publishing: the nocturne-shift project on test.pypi.org

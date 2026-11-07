@@ -1,5 +1,7 @@
 name: Publish to PyPI
 
+permissions:
+  contents: read
 # Run by hand: Actions tab -> "Publish to PyPI" -> Run workflow, on a commit
 # tagged cli-vX.Y.Z (nocturne-shift)
 # Uploads to PyPI are permanent, so:
@@ -113,7 +115,7 @@ jobs:
         with:
           name: core-dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           # PyPI refuses a version twice; skip instead of failing.
           skip-existing: true

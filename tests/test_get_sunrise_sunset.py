@@ -11,7 +11,7 @@ REAL_POPEN = subprocess.Popen
 AGENT_CMD = ["/usr/lib/geoclue-2.0/demos/agent"]
 WHERE_AM_I_CMD = [
     "/usr/lib/geoclue-2.0/demos/where-am-i",
-    "--accuracy-level=8",
+    "--accuracy-level=4",  # city level: enough for sunrise/sunset times
     "--time-threshold=3",
 ]
 
@@ -220,14 +220,71 @@ class TestSettingsIsSet:
         assert fake_settings.data_store["tzid"] == "America/New_York"
 
 
+# The request URL carries the coordinates; error output must not, since
+# under systemd it goes to the journal.
+URL_WITH_COORDS = "https://api.sunrise-sunset.org/v2?lat=40.712776&lng=-74.005974"
+
+
 @patch("nocturne_shift.bin.get_sunrise_sunset.requests.get")
-def test_http_errors_are_reported_as_http_errors(mock_get, fetcher, capsys):
+def test_http_errors_report_the_status_not_the_url(mock_get, fetcher, capsys):
+    # what raise_for_status() raises: the message names the URL, and
+    # .response is attached
+    mock_get.return_value.raise_for_status.side_effect = (
+        requests.exceptions.HTTPError(
+            f"500 Server Error: Internal Server Error for url: {URL_WITH_COORDS}",
+            response=Mock(status_code=500),
+        )
+    )
+
+    assert fetcher._get_sunrise_sunset(40.712776, -74.005974, 0) is None
+    out = capsys.readouterr().out
+    assert "HTTP error occurred (e.g., 404, 500): 500" in out
+    assert "40.712776" not in out and "74.005974" not in out
+
+
+@patch("nocturne_shift.bin.get_sunrise_sunset.requests.get")
+def test_http_error_without_a_response_is_still_reported(mock_get, fetcher, capsys):
     mock_get.return_value.raise_for_status.side_effect = (
         requests.exceptions.HTTPError("500 Server Error")
     )
 
     assert fetcher._get_sunrise_sunset(40.7, -74.0, 0) is None
-    assert "HTTP error occurred" in capsys.readouterr().out
+    assert "HTTP error occurred (e.g., 404, 500): no response" in capsys.readouterr().out
+
+
+@patch("nocturne_shift.bin.get_sunrise_sunset.requests.get")
+def test_other_errors_print_only_their_type(mock_get, fetcher, capsys):
+    # e.g. no network: requests' message includes the URL with lat/lng
+    mock_get.side_effect = requests.exceptions.ConnectionError(
+        f"Max retries exceeded with url: {URL_WITH_COORDS}"
+    )
+
+    assert fetcher._get_sunrise_sunset(40.712776, -74.005974, 0) is None
+    out = capsys.readouterr().out
+    assert out.strip() == "ConnectionError"
+
+
+@patch("nocturne_shift.bin.get_sunrise_sunset.requests.get")
+def test_request_has_a_timeout(mock_get, fetcher):
+    # no timeout lets a hung connection block the oneshot service forever
+    mock_get.return_value = _mock_response(API_PAYLOAD)
+
+    fetcher._get_sunrise_sunset(40.7, -74.0, 0)
+
+    assert mock_get.call_args.kwargs["timeout"] == (5, 15)
+
+
+@patch("nocturne_shift.bin.get_sunrise_sunset.requests.get")
+def test_coordinates_are_rounded_before_the_request(mock_get, fetcher):
+    # 2 decimals is about 1 km: plenty for sunrise/sunset times, and the
+    # third-party API doesn't get your exact location
+    mock_get.return_value = _mock_response(API_PAYLOAD)
+
+    fetcher._get_sunrise_sunset(40.712776, -74.005974, 0)
+
+    call = mock_get.call_args
+    params = call.kwargs.get("params", call.args[1] if len(call.args) > 1 else None)
+    assert params == {"lat": 40.71, "lng": -74.01}
 
 
 def test_save_without_settings_says_why(capsys):
