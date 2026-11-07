@@ -1,9 +1,8 @@
 PROJECT_NAME := nocturne-shift
-# INDEXES      := --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/
-+TESTPYPI     := https://test.pypi.org/simple/
-+WHEELS       := build/testpypi-wheels
-+# Pin a version with: make install NOCTURNE_SHIFT=nocturne-shift==0.5.3
-+NOCTURNE_SHIFT ?= nocturne-shift
+TESTPYPI     := https://test.pypi.org/simple/
+WHEELS       := build/testpypi-wheels
+# Pin a version with: make install NOCTURNE_SHIFT=nocturne-shift==0.5.3
+NOCTURNE_SHIFT ?= nocturne-shift
 SCHEMA_DIR   := src/nocturne_shift/schemas
 VENV         := venv
 PYTHON       ?= python3
@@ -50,11 +49,6 @@ testpypi-wheels: $(PY)
 install: testpypi-wheels
 	$(PY) -m pip install $(WHEELS)/nocturne_shift-*.whl
 
-# install:
-# 	$(PY) -m pip install $(INDEXES) $(PROJECT_NAME)
-
-# install-global:
-# 	sudo pipx install --global --system-site-packages --pip-args="$(INDEXES)" $(PROJECT_NAME)
 install-global: testpypi-wheels
 	sudo pipx install --global --system-site-packages $(abspath $(WHEELS))/nocturne_shift-*.whl
 
