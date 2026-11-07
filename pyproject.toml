@@ -26,7 +26,7 @@ classifiers = [
 
 
 [project.urls]
-Homepage = "https://github.com/christophermca/night-shift"
+Homepage = "https://github.com/christophermca/nocturne-shift"
 
 [project.scripts]
 nocturne-shift = "nocturne_shift:main"
