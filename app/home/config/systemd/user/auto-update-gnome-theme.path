@@ -1,9 +1,0 @@
-[Unit]
-Description=watch file
-
-[Path]
-PathModified=%h/.local/state/gnome-night-shift/is-day-or-night
-
-[Install]
-WantedBy=default.target
-

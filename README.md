@@ -1,122 +1,86 @@
-# GNOME Night Shift
+# Night Shift
 
-GNOME Night Shift is a utility that automatically switches your desktop between **Day** and **Night** modes (Light and Dark themes). Instead of manually changing appearance settings, the utility detects whether it is currently day or night at your location and applies the appropriate mode automatically.
+Night Shift will lookup the time of the sunrise and sunset for the provided location.
 
- night shift is designed for users who prefer a light desktop during the day and a dark desktop after sunset, providing a seamless transition throughout the day.
+- `nocturne-shift` can also check if the current state of the 24hr period is day or night
+- `nocturne-shift services`: systemd timers (with `gnome-night-shift`)
 
-## Features
-
-* Automatically switch between **Day** (Light) and **Night** (Dark) modes.
-* Uses sunrise and sunset times for your location.
-* Integrates directly with GNOME Shell.
-* Lightweight and easy to configure.
-
-## How It Works
-
-GNOME night Shift relies on **Redshift** to determine whether the sun is currently above or below the horizon at your location.
-
-Your geographic location is configured through Redshift's configuration file. Using this information, Redshift calculates local sunrise and sunset times, allowing GNOME Mode Shift to determine when to activate **Day** or **Night** mode.
-
-The extension does **not** determine your location on its own—it uses the location configured for Redshift.
-
-## Requirements
-
-* GNOME
-* Redshift
-* A configured Redshift location (latitude and longitude or another supported location provider)
-
-## Installation
-
-### Arch Linux
-
-The latest development version is available from the Arch User Repository (AUR):
-
-```bash
-yay -S gnome-night-shift-git
-```
-
-or
-
-```bash
-paru -S gnome-night-shift-git
-```
-
-## Usage
-
-1. Install and configure **Redshift** with your location.
-2. Install and enable **GNOME Mode Shift** i.e. (`systemctl enable --now gnome-night-shift.service`)
-3. Configure the appearance settings for **Day** mode.
-4. Configure the appearance settings for **Night** mode.
-5. The extension will automatically switch modes based on the current sunrise and sunset times reported by Redshift.
-
-Once configured, GNOME Mode Shift automatically changes between Day and Night modes as sunrise and sunset occur at your configured location.
-
-## Source Code
-
-* GitHub: https://github.com/christophermca/gnome-night-shift
-* Arch Linux (AUR): https://aur.archlinux.org/packages/gnome-night-shift-git
-
-## License
-
-# GNOME Mode Shift
-
-GNOME Mode Shift is a GNOME Shell extension that automatically switches your desktop between **Day** and **Night** modes (Light and Dark themes). Instead of manually changing appearance settings, the extension detects whether it is currently day or night at your location and applies the appropriate mode automatically.
-
-The extension is designed for users who prefer a light desktop during the day and a dark desktop after sunset, providing a seamless transition throughout the day.
 
 ## Features
 
-* Automatically switch between **Day** (Light) and **Night** (Dark) modes.
-* Uses sunrise and sunset times for your location.
-* Integrates directly with GNOME Shell.
-* Lightweight and easy to configure.
+* Use geoclue to determine location. Requires Location services to be enabled. **(Settings > Privacy & Security > Location > Enable "Automatic Device Location"**
+* Run `nocturne-shift` as a systemd service.
 
 ## How It Works
 
-GNOME Mode Shift relies on **Redshift** to determine whether the sun is currently above or below the horizon at your location.
+**Night Shift** can use the provided `latitude` and `longitude` OR will use `geoclue` to determine your systems geolocation.
+Next **Night shift** will determine the time for sunrise and sunset.
 
-Your geographic location is configured through Redshift's configuration file. Using this information, Redshift calculates local sunrise and sunset times, allowing GNOME Mode Shift to determine when to activate **Day** or **Night** mode.
-
-The extension does **not** determine your location on its own—it uses the location configured for Redshift.
+Then **Night Shift** will attempt to create a Gsettings Object to store the data.
 
 ## Requirements
+- Python 3.10+
+- GLib / GSettings and PyGObject (usually installed with your desktop; on Debian/Ubuntu: `python3-gi`)
+- `glib-compile-schemas` to compile the schema (Debian/Ubuntu: `libglib2.0-bin`)
+- Optional: systemd (Linux) for `nocturne-shift services`
+- Optional: GeoClue for `-g`
 
-* GNOME
-* Redshift
-* A configured Redshift location (latitude and longitude or another supported location provider)
 
 ## Installation
 
-### Arch Linux
+Two packages; this repo is the core:
 
-The latest development version is available from the Arch User Repository (AUR):
+| Package | What it is |
+|---|---|
+| `nocturne-shift` | The core and the `nocturne-shift` command |
+| [`gnome-night-shift`](https://github.com/christophermca/gnome-night-shift) | `nocturne-shift` plus the systemd timers (`nocturne-shift services ...`, Linux); what the GNOME extension uses. Lives in its own repo |
+
+### GNOME
 
 ```bash
-yay -S gnome-night-shift-git
+pipx install --system-site-packages gnome-night-shift
 ```
 
-or
+### Just the command
 
 ```bash
-paru -S gnome-night-shift-git
+pipx install --system-site-packages nocturne-shift
 ```
+
+`--system-site-packages` uses your distro's PyGObject instead of building it.
 
 ## Usage
 
-1. Install and configure **Redshift** with your location.
-2. Install and enable **GNOME Night Shift**
+`night-shift` still works as an old name for the same command, for now.
+
 ```sh
-systemctl enable --now gnome-night-shift.service gnome-night-shift.timer auto-update-gnome-theme.service auto-update-gnome-theme.path stop-mode-shift-timer.service
-```
-3. Configure the appearance settings for **Day** mode.ti
-4. Configure the appearance settings for **Night** mode.
-5. The extension will automatically switch modes based on the current sunrise and sunset times reported by Redshift.
+usage: nocturne-shift [-h] [--lat [LATITUDE]] [--lng [LONGITUDE]]
+                      [-c [SCHEMA_PATH]] [-f] [-g] [-w [SCHEMA_PATH]] [-v]
+                      [--version]
+                      {services} ...
 
-Once configured, GNOME Night Shift automatically changes between Day and Night modes as sunrise and sunset occur at your configured location.
+Get the times for the sunrise/sunset
+
+positional arguments:
+  {services}
+    services            Handle Night-Shift Service
+
+options:
+  -h, --help            show this help message and exit
+  --lat [LATITUDE]      compares current time with sunrise/sunset time
+  --lng [LONGITUDE]     compares current time with sunrise/sunset time
+  -c [SCHEMA_PATH], --check-now [SCHEMA_PATH]
+                        compares current time with sunrise/sunset time
+  -f, --force           ignores cached data
+  -g, --geoclue         use geoclue to determine location
+  -w [SCHEMA_PATH], --watch [SCHEMA_PATH]
+                        watch for changes in data_store
+  -v, --verbose         Prints more information
+  --version             Prints more information
+```
 
 ## Source Code
 
-* GitHub: https://github.com/christophermca/gnome-night-shift
-* Arch Linux (AUR): https://aur.archlinux.org/packages/gnome-night-shift-git
+* GitHub: https://github.com/christophermca/night-shift
 
 [![Publish to TestPyPI](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml/badge.svg?branch=dev&event=workflow_dispatch)](https://github.com/christophermca/night-shift/actions/workflows/publish-testpypi.yml)
